@@ -114,6 +114,8 @@ export type AdminListing = {
   ownershipCount?: number | null;
   registrationStatus?: string | null;
   videoUrl?: string | null;
+  brochureUrl?: string | null;
+  isFullOption?: boolean;
   mileageKm: number | null;
   description: string | null;
   vehicleLocation: string | null;

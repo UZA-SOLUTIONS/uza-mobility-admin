@@ -32,6 +32,10 @@ export async function authorizeCredentials(
       return null;
     }
 
+    if (!user.isEmailVerified) {
+      return null;
+    }
+
     return toAuthUser(user, { accessToken, refreshToken });
   } catch {
     return null;

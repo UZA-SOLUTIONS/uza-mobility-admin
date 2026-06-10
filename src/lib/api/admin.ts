@@ -169,10 +169,14 @@ export function createAdminListing(
   body: AdminCreateListingBody,
   photos: File[] = [],
   video?: File | null,
+  brochure?: File | null,
 ) {
   const fileEntries = [{ field: 'photos', files: photos }];
   if (video) {
     fileEntries.push({ field: 'video', files: [video] });
+  }
+  if (brochure) {
+    fileEntries.push({ field: 'brochure', files: [brochure] });
   }
   const form = buildMultipartFormData(body, fileEntries);
   return authenticatedMultipartFetch<AdminListing>('/admin/listings', form);
@@ -183,10 +187,14 @@ export function updateAdminListing(
   body: AdminUpdateListingBody,
   photos: File[] = [],
   video?: File | null,
+  brochure?: File | null,
 ) {
   const fileEntries = [{ field: 'photos', files: photos }];
   if (video) {
     fileEntries.push({ field: 'video', files: [video] });
+  }
+  if (brochure) {
+    fileEntries.push({ field: 'brochure', files: [brochure] });
   }
   const form = buildMultipartFormData(body, fileEntries);
   return authenticatedMultipartFetch<AdminListing>(

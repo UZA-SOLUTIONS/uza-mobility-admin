@@ -4,7 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { signOut, useSession } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { useAppRouter } from '@/lib/navigation/use-app-router';
-import { getMe, login, logout, register } from '@/lib/api/auth';
+import {
+  forgotPassword,
+  getMe,
+  login,
+  logout,
+  register,
+  resetPassword,
+} from '@/lib/api/auth';
 import { authenticatedFetch } from '@/lib/api/authenticated';
 import { ApiClientError } from '@/lib/api';
 import { authRoutes } from '@/config/routes';
@@ -13,7 +20,12 @@ import { resolvePostLoginRedirect } from '@/lib/auth/redirect';
 import { normalizeMeUser } from '@/lib/auth/seller-profiles';
 import { signOutClient } from '@/lib/auth/sign-out-client';
 import { clearUserSessionQueries } from '@/lib/query/clear-user-session';
-import type { LoginInput, RegisterInput } from '@/schemas/auth';
+import type {
+  ForgotPasswordInput,
+  LoginInput,
+  RegisterInput,
+  ResetPasswordInput,
+} from '@/schemas/auth';
 import type { MeUser } from '@/types/auth/me-user';
 
 export const authKeys = {
@@ -58,30 +70,12 @@ export function useLogin() {
 
 export function useRegister() {
   const router = useAppRouter();
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: RegisterInput) => {
-      const tokens = await register(input);
-      const me = normalizeMeUser(await getMe(tokens.accessToken));
-      const result = await signInWithSession({
-        ...tokens,
-        email: input.email,
-        password: input.password,
-      });
-
-      if (!result || result.error) {
-        throw new ApiClientError(
-          'Account created but session could not be started. Please log in.',
-          500,
-        );
-      }
-
-      return me;
-    },
-    onSuccess: async (me) => {
-      clearUserSessionQueries(queryClient);
-      router.replace(resolvePostLoginRedirect(me));
+    mutationFn: (input: RegisterInput) => register(input),
+    onSuccess: (response) => {
+      const params = new URLSearchParams({ email: response.email });
+      router.replace(`${authRoutes.checkEmail}?${params.toString()}`);
       router.refresh();
     },
   });
@@ -104,6 +98,25 @@ export function useLogout() {
     },
     onSettled: async () => {
       await signOutClient({ queryClient, redirect: false });
+      router.replace(authRoutes.login);
+      router.refresh();
+    },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (input: ForgotPasswordInput) => forgotPassword(input.email),
+  });
+}
+
+export function useResetPassword() {
+  const router = useAppRouter();
+
+  return useMutation({
+    mutationFn: (input: ResetPasswordInput) =>
+      resetPassword({ token: input.token, password: input.password }),
+    onSuccess: () => {
       router.replace(authRoutes.login);
       router.refresh();
     },

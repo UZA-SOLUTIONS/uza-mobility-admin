@@ -43,5 +43,11 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ['/admin/:path*', '/login'],
+  matcher: [
+    '/admin/:path*',
+    '/login',
+    '/forgot-password',
+    '/reset-password',
+    '/check-email',
+  ],
 };

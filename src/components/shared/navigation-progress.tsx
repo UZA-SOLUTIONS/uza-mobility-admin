@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { brand } from '@/lib/marketing/colors';
+import { brand } from '@/lib/brand';
 import {
   notifyNavigationProgressComplete,
   registerNavigationProgressComplete,

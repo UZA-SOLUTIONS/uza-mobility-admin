@@ -2,6 +2,8 @@ export const authRoutes = {
   login: '/login',
   register: '/register',
   forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
+  checkEmail: '/check-email',
 } as const;
 
 export const workspaceRoutes = {
@@ -17,6 +19,7 @@ export const adminRoutes = {
   orders: '/admin/orders',
   payments: '/admin/payments',
   bookings: '/admin/bookings',
+  inquiries: '/admin/inquiries',
   invoices: '/admin/invoices',
   financing: '/admin/financing',
   stations: '/admin/stations',
@@ -36,6 +39,7 @@ export const publicOnlyAuthPaths = [
   authRoutes.login,
   authRoutes.register,
   authRoutes.forgotPassword,
+  authRoutes.checkEmail,
 ] as const;
 
 export const protectedWorkspacePrefixes = [workspaceRoutes.admin] as const;

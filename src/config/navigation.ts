@@ -21,6 +21,7 @@ import {
   Bell,
   Settings,
   Car,
+  MessageCircle,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -39,11 +40,6 @@ export type NavItem = {
 export type NavGroup = {
   label?: string;
   items: NavItem[];
-};
-
-export type MarketingFooterColumn = {
-  title: string;
-  links: NavItem[];
 };
 
 /** Full admin sidebar; filter with `useAdminNav()`. */
@@ -113,6 +109,12 @@ export const adminNavGroups: NavGroup[] = [
         href: adminRoutes.bookings,
         icon: Car,
         permissions: ['bookings:manage', 'bookings:verify', 'bookings:reject'],
+      },
+      {
+        label: 'Inquiries',
+        href: adminRoutes.inquiries,
+        icon: MessageCircle,
+        permissions: ['inquiries:read-all', 'inquiries:update-status'],
       },
       {
         label: 'Invoices',

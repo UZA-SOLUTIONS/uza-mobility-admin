@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
@@ -108,6 +109,14 @@ export function Login() {
           {login.isPending ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
+      <p className="text-center text-sm text-muted-foreground">
+        <Link
+          href={authRoutes.forgotPassword}
+          className="underline-offset-4 hover:underline"
+        >
+          Forgot password?
+        </Link>
+      </p>
     </AuthFormCard>
   );
 }

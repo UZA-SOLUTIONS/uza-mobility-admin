@@ -94,6 +94,7 @@ export function adminListingToFormValues(
     city: listing.city ?? '',
     country: listing.country,
     description: listing.description ?? '',
+    isFullOption: listing.isFullOption ?? false,
     mileageKm: listing.mileageKm ?? undefined,
     rangeKm: listing.evSpecs?.rangeKm ?? undefined,
     batteryCapacityKwh: listing.evSpecs?.batteryCapacityKwh ?? undefined,

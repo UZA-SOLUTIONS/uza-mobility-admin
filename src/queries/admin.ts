@@ -130,11 +130,19 @@ export function useCreateAdminListing() {
       body,
       photos = [],
       video,
+      brochure,
     }: {
       body: AdminCreateListingInput;
       photos?: File[];
       video?: File | null;
-    }) => createAdminListing(toAdminCreateListingBody(body), photos, video),
+      brochure?: File | null;
+    }) =>
+      createAdminListing(
+        toAdminCreateListingBody(body),
+        photos,
+        video,
+        brochure,
+      ),
     onSuccess: () => {
       toast.success('Listing created');
       void queryClient.invalidateQueries({ queryKey: adminKeys.all });
@@ -152,12 +160,21 @@ export function useUpdateAdminListing() {
       body,
       photos = [],
       video,
+      brochure,
     }: {
       id: string;
       body: AdminUpdateListingInput;
       photos?: File[];
       video?: File | null;
-    }) => updateAdminListing(id, toAdminUpdateListingBody(body), photos, video),
+      brochure?: File | null;
+    }) =>
+      updateAdminListing(
+        id,
+        toAdminUpdateListingBody(body),
+        photos,
+        video,
+        brochure,
+      ),
     onSuccess: () => {
       toast.success('Listing updated');
       void queryClient.invalidateQueries({ queryKey: adminKeys.all });

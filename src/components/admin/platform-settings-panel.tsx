@@ -19,6 +19,7 @@ type FormState = {
   companyLegalName: string;
   companyBankName: string;
   companyAccountNumber: string;
+  companyWhatsappNumber: string;
 };
 
 export function AdminPlatformSettingsPanel() {
@@ -31,6 +32,7 @@ export function AdminPlatformSettingsPanel() {
     companyLegalName: '',
     companyBankName: '',
     companyAccountNumber: '',
+    companyWhatsappNumber: '',
   });
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export function AdminPlatformSettingsPanel() {
       companyLegalName: data.companyLegalName,
       companyBankName: data.companyBankName,
       companyAccountNumber: data.companyAccountNumber,
+      companyWhatsappNumber: data.companyWhatsappNumber,
     });
   }, [data]);
 
@@ -63,14 +66,17 @@ export function AdminPlatformSettingsPanel() {
     parsedFee > 0 &&
     form.companyLegalName.trim().length > 0 &&
     form.companyBankName.trim().length > 0 &&
-    form.companyAccountNumber.trim().length > 0;
+    form.companyAccountNumber.trim().length > 0 &&
+    form.companyWhatsappNumber.replace(/\D/g, '').length >= 8;
 
   const isDirty =
     data &&
     (parsedFee !== data.bookingFeeUsd ||
       form.companyLegalName.trim() !== data.companyLegalName ||
       form.companyBankName.trim() !== data.companyBankName ||
-      form.companyAccountNumber.trim() !== data.companyAccountNumber);
+      form.companyAccountNumber.trim() !== data.companyAccountNumber ||
+      form.companyWhatsappNumber.replace(/\D/g, '') !==
+        data.companyWhatsappNumber.replace(/\D/g, ''));
 
   const onSave = () => {
     if (!isValid || !isDirty) return;
@@ -79,6 +85,7 @@ export function AdminPlatformSettingsPanel() {
       companyLegalName: form.companyLegalName.trim(),
       companyBankName: form.companyBankName.trim(),
       companyAccountNumber: form.companyAccountNumber.trim(),
+      companyWhatsappNumber: form.companyWhatsappNumber.replace(/\D/g, ''),
     });
   };
 
@@ -86,7 +93,7 @@ export function AdminPlatformSettingsPanel() {
     <div className="space-y-6">
       <PageHeader
         title="Platform settings"
-        description="Default booking fee and company bank details used on new bookings and invoices."
+        description="Default booking fee, bank details, and WhatsApp number used on bookings, invoices, and inquiry quotes."
       />
 
       {isLoading ? (
@@ -161,6 +168,27 @@ export function AdminPlatformSettingsPanel() {
               }
               disabled={update.isPending}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="company-whatsapp-number">WhatsApp number</Label>
+            <Input
+              id="company-whatsapp-number"
+              inputMode="tel"
+              placeholder="250788000000"
+              value={form.companyWhatsappNumber}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  companyWhatsappNumber: event.target.value,
+                }))
+              }
+              disabled={update.isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              International format without + — used on quote PDFs and inquiry
+              emails.
+            </p>
           </div>
 
           <Button

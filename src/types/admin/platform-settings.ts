@@ -3,6 +3,7 @@ export type PlatformSettings = {
   companyLegalName: string;
   companyBankName: string;
   companyAccountNumber: string;
+  companyWhatsappNumber: string;
   currency: 'USD';
 };
 
@@ -11,4 +12,5 @@ export type UpdatePlatformSettingsInput = {
   companyLegalName?: string;
   companyBankName?: string;
   companyAccountNumber?: string;
+  companyWhatsappNumber?: string;
 };

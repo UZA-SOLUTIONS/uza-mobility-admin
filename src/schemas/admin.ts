@@ -164,6 +164,7 @@ const adminListingFormFieldsSchema = z.object({
   city: z.string().min(1).max(100),
   country: z.string().length(2),
   description: z.string().max(5000).optional(),
+  isFullOption: z.boolean().optional(),
   mileageKm: z.number().min(0).optional(),
   rangeKm: z.number().min(1).optional(),
   batteryCapacityKwh: z.number().min(0).optional(),
@@ -260,6 +261,7 @@ export const adminListingFormSchema = adminListingFormFieldsSchema
       .optional(),
     removePhotoIds: z.array(z.string().min(1)).optional(),
     removeVideo: z.boolean().optional(),
+    removeBrochure: z.boolean().optional(),
   })
   .superRefine(refineAdminListingPricing)
   .superRefine(refineListingEvSpecs);
@@ -284,6 +286,7 @@ export const adminUpdateListingSchema = adminListingFormFieldsSchema
       .optional(),
     removePhotoIds: z.array(z.string().min(1)).optional(),
     removeVideo: z.boolean().optional(),
+    removeBrochure: z.boolean().optional(),
   })
   .superRefine(refineAdminListingPricing)
   .superRefine(refineListingEvSpecs);

@@ -77,8 +77,11 @@ export function ListingFormDialog({
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
   const [removedPhotoIds, setRemovedPhotoIds] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [brochureFile, setBrochureFile] = useState<File | null>(null);
   const [removeVideo, setRemoveVideo] = useState(false);
+  const [removeBrochure, setRemoveBrochure] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const brochureInputRef = useRef<HTMLInputElement>(null);
   const existingPhotos = listing?.photos ?? [];
   const keptExistingPhotos = useMemo(
     () => existingPhotos.filter((photo) => !removedPhotoIds.includes(photo.id)),
@@ -107,6 +110,7 @@ export function ListingFormDialog({
       city: 'Kigali',
       country: 'RW',
       description: '',
+      isFullOption: false,
     },
   });
 
@@ -129,9 +133,14 @@ export function ListingFormDialog({
     });
     setRemovedPhotoIds([]);
     setVideoFile(null);
+    setBrochureFile(null);
     setRemoveVideo(false);
+    setRemoveBrochure(false);
     if (videoInputRef.current) {
       videoInputRef.current.value = '';
+    }
+    if (brochureInputRef.current) {
+      brochureInputRef.current.value = '';
     }
     if (listing) {
       form.reset(adminListingToFormValues(listing));
@@ -151,6 +160,7 @@ export function ListingFormDialog({
         city: 'Kigali',
         country: 'RW',
         description: '',
+        isFullOption: false,
       });
     }
   }, [open, listing, form]);
@@ -170,6 +180,7 @@ export function ListingFormDialog({
         removePhotoIds:
           removedPhotoIds.length > 0 ? removedPhotoIds : undefined,
         removeVideo: removeVideo || undefined,
+        removeBrochure: removeBrochure || undefined,
       });
 
       update.mutate(
@@ -178,6 +189,7 @@ export function ListingFormDialog({
           body,
           photos: newPhotos,
           video: videoFile,
+          brochure: brochureFile,
         },
         {
           onSuccess: () => {
@@ -195,6 +207,7 @@ export function ListingFormDialog({
         body: adminCreateListingSchema.parse(values),
         photos: newPhotos,
         video: videoFile,
+        brochure: brochureFile,
       },
       {
         onSuccess: () => {
@@ -922,6 +935,64 @@ export function ListingFormDialog({
             {videoFile ? (
               <p className="text-xs text-muted-foreground">
                 Selected: {videoFile.name}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-2 rounded-lg border p-4">
+            <Label htmlFor="listing-brochure">
+              Vehicle brochure (optional)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              PDF buyers can download from the vehicle page.
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 rounded border"
+                {...form.register('isFullOption')}
+              />
+              Full option / fully loaded trim
+            </label>
+            {isEdit && listing?.brochureUrl && !removeBrochure ? (
+              <p className="text-sm text-muted-foreground">
+                Current brochure is attached to this listing.
+              </p>
+            ) : null}
+            {isEdit && listing?.brochureUrl ? (
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 rounded border"
+                  checked={removeBrochure}
+                  onChange={(event) => {
+                    setRemoveBrochure(event.target.checked);
+                    if (event.target.checked) {
+                      setBrochureFile(null);
+                      if (brochureInputRef.current) {
+                        brochureInputRef.current.value = '';
+                      }
+                    }
+                  }}
+                />
+                Remove existing brochure
+              </label>
+            ) : null}
+            <Input
+              id="listing-brochure"
+              ref={brochureInputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              disabled={removeBrochure}
+              onChange={(event) => {
+                const file = event.target.files?.[0] ?? null;
+                setBrochureFile(file);
+                if (file) setRemoveBrochure(false);
+              }}
+            />
+            {brochureFile ? (
+              <p className="text-xs text-muted-foreground">
+                Selected: {brochureFile.name}
               </p>
             ) : null}
           </div>
