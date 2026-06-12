@@ -274,7 +274,7 @@ export function BookingDetailSheet({
         title="Reject booking payment?"
         description={
           booking
-            ? `Reject the payment proof for booking ${booking.bookingNumber}. The buyer will be notified.`
+            ? `Reject the payment proof for booking ${booking.bookingNumber}. The buyer will be notified and can resubmit payment.`
             : ''
         }
         confirmLabel="Reject booking"
