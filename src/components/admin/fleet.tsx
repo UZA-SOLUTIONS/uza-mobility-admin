@@ -59,8 +59,8 @@ export function AdminFleetPanel() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Fleet"
-        description="Review bulk vehicle requests and advance them through the quote workflow."
+        title="Fleet requests"
+        description="Review bulk vehicle inquiries from the For Business page — contact details, fleet size, and request PDFs."
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
@@ -92,12 +92,12 @@ export function AdminFleetPanel() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-1 flex-col gap-1.5 sm:max-w-md">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:max-w-xl">
           <Label htmlFor="fleet-q">Search</Label>
           <div className="flex gap-2">
             <Input
               id="fleet-q"
-              placeholder="Organization, contact, phone…"
+              placeholder="Reference, organization, email, contact, phone…"
               value={qInput}
               onChange={(e) => setQInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && applySearch()}
@@ -117,12 +117,14 @@ export function AdminFleetPanel() {
         </p>
       ) : null}
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="w-full overflow-x-auto rounded-lg border">
+        <Table className="min-w-[960px]">
           <TableHeader>
             <TableRow>
+              <TableHead>Reference</TableHead>
               <TableHead>Organization</TableHead>
               <TableHead>Contact</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Qty</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Submitted</TableHead>
@@ -133,7 +135,7 @@ export function AdminFleetPanel() {
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={8}>
                       <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
@@ -142,7 +144,7 @@ export function AdminFleetPanel() {
             {!isLoading && data?.items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={8}
                   className="py-8 text-center text-muted-foreground"
                 >
                   No fleet requests found.
@@ -151,6 +153,9 @@ export function AdminFleetPanel() {
             ) : null}
             {data?.items.map((request) => (
               <TableRow key={request.id}>
+                <TableCell className="font-mono text-xs whitespace-nowrap">
+                  {request.referenceNumber}
+                </TableCell>
                 <TableCell className="font-medium">
                   {request.organizationName}
                 </TableCell>
@@ -160,11 +165,16 @@ export function AdminFleetPanel() {
                     {request.phone}
                   </div>
                 </TableCell>
+                <TableCell className="max-w-[200px] truncate text-sm">
+                  {request.email}
+                </TableCell>
                 <TableCell>{request.quantity}</TableCell>
                 <TableCell>
                   <StatusBadge status={request.status} />
                 </TableCell>
-                <TableCell>{formatDate(request.createdAt)}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {formatDate(request.createdAt)}
+                </TableCell>
                 <TableCell className="text-right">
                   <Button
                     size="sm"

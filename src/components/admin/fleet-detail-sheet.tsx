@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { ExternalLink } from 'lucide-react';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -23,7 +25,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import { formatDateTime, formatUsd } from '@/lib/admin/format';
 import {
   useAdminFleetRequest,
   useUpdateFleetStatus,
@@ -42,6 +44,25 @@ type FleetDetailSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+function DetailField({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm text-foreground">{value}</dd>
+    </div>
+  );
+}
 
 export function FleetDetailSheet({
   requestId,
@@ -89,9 +110,16 @@ export function FleetDetailSheet({
     );
   };
 
+  const vehicleInterest = [
+    request?.vehicleCategory?.name,
+    request?.vehicleSubcategory?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl lg:max-w-3xl">
         {isLoading ? (
           <div className="space-y-4 px-6 py-6">
             <Skeleton className="h-8 w-2/3" />
@@ -110,98 +138,149 @@ export function FleetDetailSheet({
         {request && !isLoading ? (
           <>
             <SheetHeader className="border-b px-6 py-5">
-              <SheetTitle className="text-xl">
-                {request.organizationName}
-              </SheetTitle>
-              <SheetDescription>
-                {request.contactPerson} · {request.quantity} vehicle
-                {request.quantity === 1 ? '' : 's'}
-              </SheetDescription>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-1">
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {request.referenceNumber}
+                  </p>
+                  <SheetTitle className="text-xl">
+                    {request.organizationName}
+                  </SheetTitle>
+                  <SheetDescription>
+                    {request.contactPerson} · {request.quantity} vehicle
+                    {request.quantity === 1 ? '' : 's'}
+                  </SheetDescription>
+                </div>
+                <StatusBadge status={request.status} />
+              </div>
             </SheetHeader>
 
             <div className="space-y-6 px-6 py-6">
-              <StatusBadge status={request.status} />
-
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Phone</dt>
-                  <dd>{request.phone}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Email</dt>
-                  <dd>{request.email ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Buyer type</dt>
-                  <dd>{request.buyerType.replaceAll('_', ' ')}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Use case</dt>
-                  <dd>{request.useCase?.replaceAll('_', ' ') ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Timeline</dt>
-                  <dd>{request.preferredDeliveryTimeline ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Budget</dt>
-                  <dd>
-                    {request.budgetRangeMin != null ||
-                    request.budgetRangeMax != null
-                      ? `${request.budgetRangeMin != null ? formatUsd(request.budgetRangeMin) : '?'} – ${request.budgetRangeMax != null ? formatUsd(request.budgetRangeMax) : '?'}`
-                      : '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Financing</dt>
-                  <dd>{request.financingRequested ? 'Yes' : 'No'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Charging support</dt>
-                  <dd>{request.chargingSupportRequested ? 'Yes' : 'No'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Submitted</dt>
-                  <dd>{formatDateTime(request.createdAt)}</dd>
-                </div>
-                {request.quotedAt ? (
+              {request.summaryPdfUrl ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/30 px-4 py-3">
                   <div>
-                    <dt className="text-muted-foreground">Quoted at</dt>
-                    <dd>{formatDateTime(request.quotedAt)}</dd>
+                    <p className="text-sm font-medium">Request summary PDF</p>
+                    <p className="text-xs text-muted-foreground">
+                      Same document emailed to the requester (no pricing).
+                    </p>
                   </div>
-                ) : null}
-              </dl>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      href={request.summaryPdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open PDF
+                      <ExternalLink className="ml-2 size-3.5" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : null}
+
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold">Contact</h3>
+                <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <DetailField
+                    label="Contact person"
+                    value={request.contactPerson}
+                  />
+                  <DetailField label="Phone" value={request.phone} />
+                  <DetailField label="Email" value={request.email} />
+                  <DetailField
+                    label="Buyer type"
+                    value={request.buyerType.replaceAll('_', ' ')}
+                  />
+                  {request.user ? (
+                    <DetailField
+                      label="Linked account"
+                      value={`${[request.user.firstName, request.user.lastName].filter(Boolean).join(' ') || 'Buyer'} (${request.user.email})`}
+                      className="sm:col-span-2"
+                    />
+                  ) : (
+                    <DetailField
+                      label="Linked account"
+                      value="Guest (no account yet)"
+                    />
+                  )}
+                </dl>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold">Fleet requirements</h3>
+                <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <DetailField label="Fleet size" value={request.quantity} />
+                  <DetailField
+                    label="Vehicle category"
+                    value={vehicleInterest || '—'}
+                  />
+                  <DetailField
+                    label="Use case"
+                    value={request.useCase?.replaceAll('_', ' ') ?? '—'}
+                  />
+                  <DetailField
+                    label="Preferred timeline"
+                    value={request.preferredDeliveryTimeline ?? '—'}
+                  />
+                  <DetailField
+                    label="Budget range"
+                    value={
+                      request.budgetRangeMin != null ||
+                      request.budgetRangeMax != null
+                        ? `${request.budgetRangeMin != null ? formatUsd(request.budgetRangeMin) : '?'} – ${request.budgetRangeMax != null ? formatUsd(request.budgetRangeMax) : '?'}`
+                        : '—'
+                    }
+                  />
+                  <DetailField
+                    label="Financing requested"
+                    value={request.financingRequested ? 'Yes' : 'No'}
+                  />
+                  <DetailField
+                    label="Charging support"
+                    value={request.chargingSupportRequested ? 'Yes' : 'No'}
+                  />
+                  <DetailField
+                    label="Submitted"
+                    value={formatDateTime(request.createdAt)}
+                  />
+                  {request.quotedAt ? (
+                    <DetailField
+                      label="Quoted at"
+                      value={formatDateTime(request.quotedAt)}
+                    />
+                  ) : null}
+                </dl>
+              </section>
 
               {request.association ? (
-                <div className="rounded-lg border p-4 text-sm">
+                <section className="rounded-lg border p-4 text-sm">
                   <p className="font-medium">Association</p>
-                  <p className="text-muted-foreground">
+                  <p className="mt-1 text-muted-foreground">
                     {request.association.name} · {request.association.type} ·{' '}
                     {request.association.country}
                   </p>
-                </div>
+                </section>
               ) : null}
 
               {request.notes ? (
-                <div className="text-sm">
-                  <p className="font-medium">Customer notes</p>
-                  <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                <section className="text-sm">
+                  <p className="font-medium">Customer message</p>
+                  <p className="mt-2 rounded-lg border bg-muted/20 p-4 whitespace-pre-wrap text-muted-foreground">
                     {request.notes}
                   </p>
-                </div>
+                </section>
               ) : null}
 
               {request.adminNotes ? (
-                <div className="text-sm">
+                <section className="text-sm">
                   <p className="font-medium">Admin notes</p>
-                  <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                  <p className="mt-2 rounded-lg border bg-muted/20 p-4 whitespace-pre-wrap text-muted-foreground">
                     {request.adminNotes}
                   </p>
-                </div>
+                </section>
               ) : null}
 
               {canUpdate ? (
-                <div className="space-y-3 rounded-lg border p-4">
+                <section className="space-y-3 rounded-lg border p-4">
                   <p className="text-sm font-medium">Update status</p>
                   <div className="space-y-1.5">
                     <Label>New status</Label>
@@ -237,7 +316,7 @@ export function FleetDetailSheet({
                   >
                     {updateStatus.isPending ? 'Saving…' : 'Save status'}
                   </Button>
-                </div>
+                </section>
               ) : null}
             </div>
           </>

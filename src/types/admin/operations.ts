@@ -25,13 +25,15 @@ export const FLEET_STATUS_TRANSITIONS: Record<
 
 export type FleetRequest = {
   id: string;
-  userId: string;
+  referenceNumber: string;
+  summaryPdfUrl: string | null;
+  userId: string | null;
   associationId: string | null;
   status: FleetRequestStatus;
   organizationName: string;
   contactPerson: string;
   phone: string;
-  email: string | null;
+  email: string;
   buyerType: string;
   vehicleCategoryId: string | null;
   vehicleSubcategoryId: string | null;
@@ -49,6 +51,12 @@ export type FleetRequest = {
   updatedAt: string;
 };
 
+export type FleetCategoryRef = {
+  id: string;
+  name: string;
+  slug: string;
+} | null;
+
 export type FleetRequestDetail = FleetRequest & {
   association: {
     id: string;
@@ -60,7 +68,9 @@ export type FleetRequestDetail = FleetRequest & {
     email: string;
     firstName: string | null;
     lastName: string | null;
-  };
+  } | null;
+  vehicleCategory: FleetCategoryRef;
+  vehicleSubcategory: FleetCategoryRef;
 };
 
 export type AdminFleetFilters = {

@@ -137,7 +137,9 @@ export function WorkspaceShell({
           ) : null}
         </header>
         <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain">
-          <div className="mx-auto w-full max-w-6xl p-4 lg:p-6">{children}</div>
+          <div className="mx-auto w-full max-w-none px-4 py-4 lg:px-8 lg:py-6 xl:px-10 2xl:px-12">
+            {children}
+          </div>
         </main>
       </div>
     </div>
