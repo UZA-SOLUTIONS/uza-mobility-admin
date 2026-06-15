@@ -55,11 +55,11 @@ export type AdminListingCategory = {
 
 export type AdminListingPricing = {
   finalPriceUsd: number;
-  finalPriceRwf: number | null;
   currency: string;
   basePriceUsd?: number | null;
   fobPriceUsd?: number | null;
   discountUsd?: number | null;
+  priceNotes?: string | null;
 };
 
 export const verificationLevels = [
@@ -112,7 +112,12 @@ export type AdminListing = {
   warrantyDetails?: string | null;
   hasAccidentHistory?: boolean | null;
   ownershipCount?: number | null;
-  registrationStatus?: string | null;
+  registrationStatus?:
+    | 'REGISTERED'
+    | 'READY_FOR_REGISTRATION'
+    | 'IMPORT_PENDING'
+    | 'NOT_APPLICABLE'
+    | null;
   videoUrl?: string | null;
   brochureUrl?: string | null;
   isFullOption?: boolean;

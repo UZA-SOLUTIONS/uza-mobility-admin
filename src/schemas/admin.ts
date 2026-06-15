@@ -23,6 +23,15 @@ export const updateVerificationSchema = z.object({
 
 export type UpdateVerificationInput = z.infer<typeof updateVerificationSchema>;
 
+export const LISTING_DESCRIPTION_MAX_WORDS = 500;
+
+export const RWANDA_STOCK_DELIVERY_DAYS = { min: 1, max: 4 } as const;
+export const CHINA_SOURCING_DELIVERY_DAYS = { min: 45, max: 60 } as const;
+
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export const listingConditions = [
   'NEW',
   'EXCELLENT',
@@ -31,6 +40,23 @@ export const listingConditions = [
   'FAIR',
   'NEEDS_REVIEW',
 ] as const;
+
+export const listingRegistrationStatuses = [
+  'REGISTERED',
+  'READY_FOR_REGISTRATION',
+  'IMPORT_PENDING',
+  'NOT_APPLICABLE',
+] as const;
+
+export const listingRegistrationStatusLabels: Record<
+  (typeof listingRegistrationStatuses)[number],
+  string
+> = {
+  REGISTERED: 'Registered',
+  READY_FOR_REGISTRATION: 'Ready for registration',
+  IMPORT_PENDING: 'Import pending',
+  NOT_APPLICABLE: 'Not applicable',
+};
 
 /** Stored on listing EV specs (`EvSpec.chargingType`). */
 export const listingChargingTypes = [
@@ -141,7 +167,6 @@ const adminListingFormFieldsSchema = z.object({
   sellerType: z.enum(adminListingSellerTypes),
   listingTitle: z.string().min(1).max(200),
   categoryId: z.string().min(1, 'Category is required'),
-  subcategoryId: z.string().optional(),
   brand: z.string().min(1).max(100),
   model: z.string().min(1).max(100),
   trim: z.string().max(100).optional(),
@@ -149,7 +174,10 @@ const adminListingFormFieldsSchema = z.object({
   condition: z.enum(listingConditions),
   bodyType: z.enum(listingBodyTypes).optional(),
   powertrainType: z.enum(listingPowertrainTypes).optional(),
-  color: z.string().max(100).optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Pick a color')
+    .optional(),
   seats: z.number().int().min(1).optional(),
   steeringPosition: z.enum(listingSteeringPositions).optional(),
   drivetrain: z.enum(listingDrivetrains).optional(),
@@ -157,27 +185,32 @@ const adminListingFormFieldsSchema = z.object({
   warrantyDetails: z.string().max(500).optional(),
   hasAccidentHistory: z.boolean().optional(),
   ownershipCount: z.number().int().min(0).optional(),
-  registrationStatus: z.string().max(200).optional(),
+  registrationStatus: z.enum(listingRegistrationStatuses).optional(),
   useCases: z.array(z.enum(listingUseCases)).optional(),
-  deliveryEstimateDays: z.number().int().min(0).optional(),
-  vehicleLocation: z.string().min(1).max(255),
+  deliveryEstimateDays: z.number().int().min(1),
   city: z.string().min(1).max(100),
   country: z.string().length(2),
-  description: z.string().max(5000).optional(),
+  description: z
+    .string()
+    .max(5000)
+    .optional()
+    .refine(
+      (value) => !value || countWords(value) <= LISTING_DESCRIPTION_MAX_WORDS,
+      `Description must be ${LISTING_DESCRIPTION_MAX_WORDS} words or fewer`,
+    ),
   isFullOption: z.boolean().optional(),
   mileageKm: z.number().min(0).optional(),
   rangeKm: z.number().min(1).optional(),
   batteryCapacityKwh: z.number().min(0).optional(),
   batteryHealthPercent: z.number().min(0).max(100).optional(),
   batteryHealthReport: z.boolean().optional(),
-  chargingType: z.enum(listingChargingTypes).optional(),
   fastChargingSupported: z.boolean().optional(),
   chargingTimeHours: z.number().min(0).optional(),
   motorPowerKw: z.number().min(0).optional(),
   topSpeedKmh: z.number().min(0).optional(),
   payloadCapacityKg: z.number().min(0).optional(),
   grossVehicleWeightKg: z.number().min(0).optional(),
-  seatingCapacity: z.number().int().min(1).optional(),
+  pricingRuleId: z.string().min(1, 'Select a pricing rule'),
   basePriceUsd: z.number().min(0).optional(),
   fobPriceUsd: z.number().min(0).optional(),
   discountUsd: z.number().min(0).optional(),
@@ -195,14 +228,6 @@ function refineListingEvSpecs(
     });
   }
 
-  if (!data.chargingType) {
-    ctx.addIssue({
-      code: 'custom',
-      message: 'Charging type is required',
-      path: ['chargingType'],
-    });
-  }
-
   if (
     data.condition !== 'NEW' &&
     (data.batteryHealthPercent == null || data.batteryHealthPercent <= 0)
@@ -211,6 +236,49 @@ function refineListingEvSpecs(
       code: 'custom',
       message: 'Battery health (%) is required for pre-owned vehicles',
       path: ['batteryHealthPercent'],
+    });
+  }
+}
+
+function refineAdminListingDelivery(
+  data: z.infer<typeof adminListingFormFieldsSchema>,
+  ctx: z.RefinementCtx,
+) {
+  const days = data.deliveryEstimateDays;
+  if (data.sellerType === 'UZA_RWANDA_STOCK') {
+    if (
+      days < RWANDA_STOCK_DELIVERY_DAYS.min ||
+      days > RWANDA_STOCK_DELIVERY_DAYS.max
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `Delivery must be between ${RWANDA_STOCK_DELIVERY_DAYS.min} and ${RWANDA_STOCK_DELIVERY_DAYS.max} days for Rwanda stock`,
+        path: ['deliveryEstimateDays'],
+      });
+    }
+    if (data.country !== 'RW') {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Rwanda stock listings must use country RW',
+        path: ['country'],
+      });
+    }
+  } else if (
+    days < CHINA_SOURCING_DELIVERY_DAYS.min ||
+    days > CHINA_SOURCING_DELIVERY_DAYS.max
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      message: `Delivery must be between ${CHINA_SOURCING_DELIVERY_DAYS.min} and ${CHINA_SOURCING_DELIVERY_DAYS.max} days for China sourcing`,
+      path: ['deliveryEstimateDays'],
+    });
+  }
+
+  if (data.sellerType === 'UZA_CHINA_SOURCING' && data.country !== 'CN') {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'China sourcing listings must use country CN',
+      path: ['country'],
     });
   }
 }
@@ -264,7 +332,8 @@ export const adminListingFormSchema = adminListingFormFieldsSchema
     removeBrochure: z.boolean().optional(),
   })
   .superRefine(refineAdminListingPricing)
-  .superRefine(refineListingEvSpecs);
+  .superRefine(refineListingEvSpecs)
+  .superRefine(refineAdminListingDelivery);
 
 export type AdminListingFormInput = z.infer<typeof adminListingFormSchema>;
 
@@ -289,7 +358,8 @@ export const adminUpdateListingSchema = adminListingFormFieldsSchema
     removeBrochure: z.boolean().optional(),
   })
   .superRefine(refineAdminListingPricing)
-  .superRefine(refineListingEvSpecs);
+  .superRefine(refineListingEvSpecs)
+  .superRefine(refineAdminListingDelivery);
 
 export type AdminUpdateListingInput = z.infer<typeof adminUpdateListingSchema>;
 
@@ -298,7 +368,8 @@ export const adminCreateListingSchema = adminListingFormFieldsSchema
     initialStatus: z.enum(adminListingInitialStatuses),
   })
   .superRefine(refineAdminListingPricing)
-  .superRefine(refineListingEvSpecs);
+  .superRefine(refineListingEvSpecs)
+  .superRefine(refineAdminListingDelivery);
 
 export type AdminCreateListingInput = z.infer<typeof adminCreateListingSchema>;
 

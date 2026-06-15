@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { PageHeader } from '@/components/shared/page-header';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
@@ -528,7 +529,7 @@ export function AdminStationsPanel() {
         open={Boolean(selectedOperator)}
         onOpenChange={(open) => !open && setSelectedOperator(null)}
       >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent className={adminDetailSheetClassName}>
           <SheetHeader>
             <SheetTitle>{selectedOperator?.businessName}</SheetTitle>
             <SheetDescription>Operator application details</SheetDescription>
@@ -576,7 +577,7 @@ export function AdminStationsPanel() {
         open={Boolean(selectedStation)}
         onOpenChange={(open) => !open && setSelectedStation(null)}
       >
-        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+        <SheetContent className={adminDetailSheetClassName}>
           <SheetHeader>
             <SheetTitle>{selectedStation?.name}</SheetTitle>
             <SheetDescription>Station moderation details</SheetDescription>

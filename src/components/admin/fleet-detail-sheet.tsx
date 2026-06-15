@@ -26,6 +26,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDateTime, formatUsd } from '@/lib/admin/format';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useAdminFleetRequest,
   useUpdateFleetStatus,
@@ -119,7 +120,7 @@ export function FleetDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl lg:max-w-3xl">
+      <SheetContent className={adminDetailSheetClassName}>
         {isLoading ? (
           <div className="space-y-4 px-6 py-6">
             <Skeleton className="h-8 w-2/3" />

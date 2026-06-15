@@ -1,13 +1,16 @@
 import type { AdminListingFormInput } from '@/schemas/admin';
 import {
+  CHINA_SOURCING_DELIVERY_DAYS,
   listingBodyTypes,
-  listingChargingTypes,
   listingConditions,
   listingDrivetrains,
   listingPowertrainTypes,
+  listingRegistrationStatuses,
   listingSteeringPositions,
   listingUseCases,
+  RWANDA_STOCK_DELIVERY_DAYS,
 } from '@/schemas/admin';
+import { parseListingPricingRuleId } from '@/lib/admin/listing-pricing';
 import type { AdminListing } from '@/types/admin/marketplace';
 
 function parseEnumValue<T extends readonly string[]>(
@@ -65,7 +68,6 @@ export function adminListingToFormValues(
     sellerType,
     listingTitle: listing.listingTitle,
     categoryId: listing.category.id,
-    subcategoryId: listing.subcategory?.id ?? '',
     brand: listing.brand,
     model: listing.model,
     trim: listing.trim ?? '',
@@ -76,7 +78,9 @@ export function adminListingToFormValues(
       listing.powertrainType,
       listingPowertrainTypes,
     ),
-    color: listing.color ?? undefined,
+    color: listing.color?.match(/^#[0-9A-Fa-f]{6}$/)
+      ? listing.color
+      : '#1a1a1a',
     seats: listing.seats ?? undefined,
     steeringPosition: parseEnumValue(
       listing.steeringPosition,
@@ -87,10 +91,16 @@ export function adminListingToFormValues(
     warrantyDetails: listing.warrantyDetails ?? undefined,
     hasAccidentHistory: listing.hasAccidentHistory ?? undefined,
     ownershipCount: listing.ownershipCount ?? undefined,
-    registrationStatus: listing.registrationStatus ?? undefined,
+    registrationStatus: parseEnumValue(
+      listing.registrationStatus,
+      listingRegistrationStatuses,
+    ),
     useCases: useCases?.length ? useCases : undefined,
-    deliveryEstimateDays: listing.deliveryEstimateDays ?? undefined,
-    vehicleLocation: listing.vehicleLocation ?? '',
+    deliveryEstimateDays:
+      listing.deliveryEstimateDays ??
+      (sellerType === 'UZA_RWANDA_STOCK'
+        ? RWANDA_STOCK_DELIVERY_DAYS.max
+        : CHINA_SOURCING_DELIVERY_DAYS.min),
     city: listing.city ?? '',
     country: listing.country,
     description: listing.description ?? '',
@@ -100,17 +110,14 @@ export function adminListingToFormValues(
     batteryCapacityKwh: listing.evSpecs?.batteryCapacityKwh ?? undefined,
     batteryHealthPercent: listing.evSpecs?.batteryHealthPercent ?? undefined,
     batteryHealthReport: listing.evSpecs?.batteryHealthReport ?? undefined,
-    chargingType: parseEnumValue(
-      listing.evSpecs?.chargingType ?? undefined,
-      listingChargingTypes,
-    ),
     fastChargingSupported: listing.evSpecs?.fastChargingSupported ?? undefined,
     chargingTimeHours: listing.evSpecs?.chargingTimeHours ?? undefined,
     motorPowerKw: listing.evSpecs?.motorPowerKw ?? undefined,
     topSpeedKmh: listing.evSpecs?.topSpeedKmh ?? undefined,
     payloadCapacityKg: listing.evSpecs?.payloadCapacityKg ?? undefined,
     grossVehicleWeightKg: listing.evSpecs?.grossVehicleWeightKg ?? undefined,
-    seatingCapacity: listing.evSpecs?.seatingCapacity ?? undefined,
+    pricingRuleId:
+      parseListingPricingRuleId(listing.listingPricing?.priceNotes) ?? '',
     basePriceUsd: listing.listingPricing?.basePriceUsd ?? undefined,
     fobPriceUsd: listing.listingPricing?.fobPriceUsd ?? undefined,
     discountUsd: listing.listingPricing?.discountUsd ?? undefined,

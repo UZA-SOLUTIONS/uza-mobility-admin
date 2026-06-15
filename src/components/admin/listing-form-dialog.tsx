@@ -6,12 +6,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ExistingPhotosGrid } from '@/components/shared/existing-photos-grid';
 import { PendingPhotoPicker } from '@/components/shared/pending-photo-picker';
+import { PricingBreakdown } from '@/components/shared/pricing-breakdown';
 import {
   pendingPhotoFiles,
   revokePendingPhotos,
   type PendingPhoto,
 } from '@/lib/pending-photos';
 import { adminListingToFormValues } from '@/lib/admin/listing-form';
+import {
+  formatPricingRuleLabel,
+  selectableListingPricingRules,
+} from '@/lib/admin/listing-pricing';
+import { calculateAdminPricing } from '@/lib/api/platform';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,25 +45,34 @@ import {
   useCreateAdminListing,
   useUpdateAdminListing,
 } from '@/queries/admin';
+import { useAdminPricingRules } from '@/queries/platform';
 import {
   adminCreateListingSchema,
   adminListingFormSchema,
   adminListingInitialStatuses,
   adminListingStatusEditOptions,
   adminUpdateListingSchema,
-  formatListingChargingType,
+  CHINA_SOURCING_DELIVERY_DAYS,
   formatListingEnumLabel,
+  LISTING_DESCRIPTION_MAX_WORDS,
   listingBodyTypes,
-  listingChargingTypes,
   listingConditions,
   listingDrivetrains,
   listingPowertrainTypes,
+  listingRegistrationStatuses,
+  listingRegistrationStatusLabels,
   listingSteeringPositions,
   listingUseCases,
   MAX_LISTING_PHOTOS,
+  RWANDA_STOCK_DELIVERY_DAYS,
   type AdminListingFormInput,
 } from '@/schemas/admin';
+import type { PriceBreakdown } from '@/types/pricing';
 import type { AdminListing } from '@/types/admin/marketplace';
+
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
 
 type ListingFormDialogProps = {
   open: boolean;
@@ -74,6 +89,11 @@ export function ListingFormDialog({
   const create = useCreateAdminListing();
   const update = useUpdateAdminListing();
   const { data: categories } = useAdminCategories({ isActive: true }, open);
+  const { data: pricingRules } = useAdminPricingRules(open);
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
+    null,
+  );
+  const [priceLoading, setPriceLoading] = useState(false);
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
   const [removedPhotoIds, setRemovedPhotoIds] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -100,15 +120,16 @@ export function ListingFormDialog({
       initialStatus: 'PENDING_REVIEW',
       listingTitle: '',
       categoryId: '',
-      subcategoryId: '',
       brand: '',
       model: '',
       trim: '',
       manufacturingYear: new Date().getFullYear(),
       condition: 'NEW',
-      vehicleLocation: '',
       city: 'Kigali',
       country: 'RW',
+      color: '#1a1a1a',
+      deliveryEstimateDays: RWANDA_STOCK_DELIVERY_DAYS.min,
+      pricingRuleId: '',
       description: '',
       isFullOption: false,
     },
@@ -116,14 +137,84 @@ export function ListingFormDialog({
 
   const sellerType = form.watch('sellerType');
   const categoryId = form.watch('categoryId');
+  const pricingRuleId = form.watch('pricingRuleId');
+  const basePriceUsd = form.watch('basePriceUsd');
+  const fobPriceUsd = form.watch('fobPriceUsd');
+  const discountUsd = form.watch('discountUsd');
+  const country = form.watch('country');
+  const description = form.watch('description') ?? '';
+  const descriptionWordCount = countWords(description);
+  const selectablePricingRules = useMemo(
+    () =>
+      selectableListingPricingRules(
+        pricingRules,
+        pricingRuleId || undefined,
+        sellerType,
+      ),
+    [pricingRules, pricingRuleId, sellerType],
+  );
   const statusOptions = listing
     ? adminListingStatusEditOptions(listing.status)
     : [];
   const canEditStatus = isEdit && statusOptions.length > 1;
-  const selectedCategory = categories?.find(
-    (category) => category.id === categoryId,
-  );
-  const subcategories = selectedCategory?.subcategories ?? [];
+
+  useEffect(() => {
+    if (!open) return;
+
+    if (sellerType === 'UZA_RWANDA_STOCK') {
+      form.setValue('country', 'RW');
+      if (!isEdit) {
+        form.setValue('deliveryEstimateDays', RWANDA_STOCK_DELIVERY_DAYS.min);
+      }
+    } else {
+      form.setValue('country', 'CN');
+      if (!isEdit) {
+        form.setValue('deliveryEstimateDays', CHINA_SOURCING_DELIVERY_DAYS.min);
+      }
+    }
+  }, [sellerType, open, isEdit, form]);
+
+  useEffect(() => {
+    if (!open || !pricingRuleId) {
+      setPriceBreakdown(null);
+      return;
+    }
+
+    const hasPriceInput =
+      sellerType === 'UZA_RWANDA_STOCK'
+        ? (basePriceUsd ?? 0) > 0
+        : (fobPriceUsd ?? 0) > 0;
+
+    if (!hasPriceInput) {
+      setPriceBreakdown(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setPriceLoading(true);
+      void calculateAdminPricing({
+        sellerType,
+        originCountry: country,
+        pricingRuleId,
+        basePriceUsd,
+        fobPriceUsd,
+        discountUsd,
+      })
+        .then(setPriceBreakdown)
+        .catch(() => setPriceBreakdown(null))
+        .finally(() => setPriceLoading(false));
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    open,
+    sellerType,
+    country,
+    pricingRuleId,
+    basePriceUsd,
+    fobPriceUsd,
+    discountUsd,
+  ]);
 
   useEffect(() => {
     if (!open) return;
@@ -150,15 +241,16 @@ export function ListingFormDialog({
         initialStatus: 'PENDING_REVIEW',
         listingTitle: '',
         categoryId: '',
-        subcategoryId: '',
         brand: '',
         model: '',
         trim: '',
         manufacturingYear: new Date().getFullYear(),
         condition: 'NEW',
-        vehicleLocation: '',
         city: 'Kigali',
         country: 'RW',
+        color: '#1a1a1a',
+        deliveryEstimateDays: RWANDA_STOCK_DELIVERY_DAYS.min,
+        pricingRuleId: '',
         description: '',
         isFullOption: false,
       });
@@ -221,7 +313,7 @@ export function ListingFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl lg:max-w-5xl">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? 'Edit platform listing' : 'New platform listing'}
@@ -320,50 +412,25 @@ export function ListingFormDialog({
             <Input id="listing-title" {...form.register('listingTitle')} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label>Category</Label>
-              <Select
-                value={categoryId}
-                onValueChange={(value) => {
-                  form.setValue('categoryId', value);
-                  form.setValue('subcategoryId', '');
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Subcategory</Label>
-              <Select
-                value={form.watch('subcategoryId') ?? ''}
-                onValueChange={(value) =>
-                  form.setValue('subcategoryId', value === 'none' ? '' : value)
-                }
-                disabled={subcategories.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Optional" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {subcategories.map((sub) => (
-                    <SelectItem key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1.5">
+            <Label>Category</Label>
+            <Select
+              value={categoryId}
+              onValueChange={(value) => {
+                form.setValue('categoryId', value);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -479,7 +546,24 @@ export function ListingFormDialog({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="color">Color</Label>
-                <Input id="color" {...form.register('color')} />
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="color"
+                    type="color"
+                    className="h-10 w-14 cursor-pointer p-1"
+                    value={form.watch('color') ?? '#1a1a1a'}
+                    onChange={(event) =>
+                      form.setValue('color', event.target.value)
+                    }
+                  />
+                  <Input
+                    value={form.watch('color') ?? '#1a1a1a'}
+                    onChange={(event) =>
+                      form.setValue('color', event.target.value)
+                    }
+                    className="font-mono uppercase"
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="seats">Seats</Label>
@@ -550,11 +634,30 @@ export function ListingFormDialog({
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="registration-status">Registration status</Label>
-                <Input
-                  id="registration-status"
-                  {...form.register('registrationStatus')}
-                />
+                <Label>Registration status</Label>
+                <Select
+                  value={form.watch('registrationStatus') ?? ''}
+                  onValueChange={(value) =>
+                    form.setValue(
+                      'registrationStatus',
+                      value === 'none'
+                        ? undefined
+                        : (value as AdminListingFormInput['registrationStatus']),
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Optional" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {listingRegistrationStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {listingRegistrationStatusLabels[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-end gap-2 pb-2">
                 <input
@@ -635,35 +738,6 @@ export function ListingFormDialog({
                   {...form.register('rangeKm', numberRegisterOptions())}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label>Charging type</Label>
-                <Select
-                  value={form.watch('chargingType') ?? ''}
-                  onValueChange={(value) =>
-                    form.setValue(
-                      'chargingType',
-                      value as AdminListingFormInput['chargingType'],
-                      { shouldValidate: true },
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select charging type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {listingChargingTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {formatListingChargingType(type)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.chargingType ? (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.chargingType.message}
-                  </p>
-                ) : null}
-              </div>
               {form.watch('condition') !== 'NEW' ? (
                 <div className="space-y-1.5">
                   <Label htmlFor="battery-health">Battery health (%)</Label>
@@ -740,14 +814,6 @@ export function ListingFormDialog({
                   )}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="seating-capacity">Seating capacity</Label>
-                <NumberInput
-                  id="seating-capacity"
-                  min={1}
-                  {...form.register('seatingCapacity', numberRegisterOptions())}
-                />
-              </div>
               <div className="flex items-end gap-2 pb-2">
                 <input
                   id="battery-health-report"
@@ -779,24 +845,84 @@ export function ListingFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="location">Vehicle location</Label>
-              <Input id="location" {...form.register('vehicleLocation')} />
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="city">City</Label>
-              <Input id="city" {...form.register('city')} />
+              <Input
+                id="city"
+                placeholder={
+                  sellerType === 'UZA_RWANDA_STOCK'
+                    ? 'e.g. Kigali'
+                    : 'e.g. Shanghai'
+                }
+                {...form.register('city')}
+              />
+              <p className="text-xs text-muted-foreground">
+                {sellerType === 'UZA_RWANDA_STOCK'
+                  ? 'Rwanda stock — city in Rwanda only.'
+                  : 'China sourcing — city in China only.'}
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="delivery-days">Delivery estimate (days)</Label>
               <NumberInput
                 id="delivery-days"
-                min={0}
+                min={
+                  sellerType === 'UZA_RWANDA_STOCK'
+                    ? RWANDA_STOCK_DELIVERY_DAYS.min
+                    : CHINA_SOURCING_DELIVERY_DAYS.min
+                }
+                max={
+                  sellerType === 'UZA_RWANDA_STOCK'
+                    ? RWANDA_STOCK_DELIVERY_DAYS.max
+                    : CHINA_SOURCING_DELIVERY_DAYS.max
+                }
                 {...form.register(
                   'deliveryEstimateDays',
                   numberRegisterOptions(),
                 )}
               />
+              <p className="text-xs text-muted-foreground">
+                {sellerType === 'UZA_RWANDA_STOCK'
+                  ? `${RWANDA_STOCK_DELIVERY_DAYS.min}–${RWANDA_STOCK_DELIVERY_DAYS.max} days for Rwanda stock`
+                  : `${CHINA_SOURCING_DELIVERY_DAYS.min}–${CHINA_SOURCING_DELIVERY_DAYS.max} days for China sourcing`}
+              </p>
             </div>
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-4">
+            <p className="text-sm font-medium">Pricing rule</p>
+            <div className="space-y-1.5">
+              <Label>Rule to apply</Label>
+              <p className="text-xs text-muted-foreground">
+                {selectablePricingRules.length === 0
+                  ? 'No pricing rules yet — add them under Pricing rules.'
+                  : 'Choose any pricing rule. Rules for this inventory channel are listed first.'}
+              </p>
+              <Select
+                value={pricingRuleId || undefined}
+                onValueChange={(value) => form.setValue('pricingRuleId', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select pricing rule" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectablePricingRules.map((rule) => (
+                    <SelectItem key={rule.id} value={rule.id}>
+                      {formatPricingRuleLabel(rule)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {form.formState.errors.pricingRuleId ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.pricingRuleId.message}
+                </p>
+              ) : null}
+            </div>
+            <PricingBreakdown
+              breakdown={priceBreakdown}
+              loading={priceLoading}
+              sellerType={sellerType}
+            />
           </div>
 
           {sellerType === 'UZA_RWANDA_STOCK' ? (
@@ -860,6 +986,9 @@ export function ListingFormDialog({
               rows={3}
               {...form.register('description')}
             />
+            <p className="text-xs text-muted-foreground">
+              {descriptionWordCount} / {LISTING_DESCRIPTION_MAX_WORDS} words
+            </p>
           </div>
 
           {isEdit ? (

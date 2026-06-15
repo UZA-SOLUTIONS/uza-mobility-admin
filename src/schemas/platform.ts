@@ -26,7 +26,6 @@ export const createPricingRuleSchema = z.object({
   clearingFeeUsd: optionalNumber,
   platformMarginPercent: optionalNumber,
   commissionRate: optionalNumber,
-  exchangeRateRwf: optionalNumber,
   deliveryDaysMin: z.number().int().min(0).optional(),
   deliveryDaysMax: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),

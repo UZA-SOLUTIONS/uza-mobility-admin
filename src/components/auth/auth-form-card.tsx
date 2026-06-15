@@ -11,7 +11,7 @@ type AuthFormCardProps = {
  */
 export function AuthFormCard({ children }: AuthFormCardProps) {
   return (
-    <div className="auth-surface space-y-6 rounded-xl border border-white/40 bg-white/95 p-6 text-foreground shadow-xl backdrop-blur-sm">
+    <div className="auth-surface w-full rounded-2xl border border-[#E9E9E9] bg-white p-4 sm:p-5">
       {children}
     </div>
   );

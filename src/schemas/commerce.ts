@@ -47,7 +47,6 @@ export const createFleetInvoiceSchema = z.object({
   userId: z.string().min(1, 'Select a buyer'),
   listingId: z.string().optional(),
   totalAmountUsd: z.number().min(0.01, 'Amount must be greater than zero'),
-  totalAmountRwf: z.number().min(0).optional(),
   notes: z.string().max(2000).optional(),
 });
 

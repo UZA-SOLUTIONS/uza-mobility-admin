@@ -44,6 +44,23 @@ export function getAdminActivityLogs(filters: ActivityLogsFilters = {}) {
   });
 }
 
+export function calculateAdminPricing(body: {
+  sellerType: string;
+  originCountry?: string;
+  pricingRuleId?: string;
+  basePriceUsd?: number;
+  fobPriceUsd?: number;
+  discountUsd?: number;
+}) {
+  return authenticatedFetch<import('@/types/pricing').PriceBreakdown>(
+    '/admin/pricing-rules/calculate',
+    {
+      method: 'POST',
+      body: JSON.stringify(body),
+    },
+  );
+}
+
 export function getAdminPricingRules() {
   return authenticatedFetch<PricingRule[]>('/admin/pricing-rules');
 }

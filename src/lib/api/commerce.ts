@@ -129,7 +129,6 @@ export function buildFleetInvoicePayload(
     listingId: body.listingId?.trim() || undefined,
     vehicleBrand: listing?.brand,
     vehicleModel: listing?.model,
-    totalAmountRwf: body.totalAmountRwf,
     notes: body.notes?.trim() || undefined,
     invoiceType: 'FLEET' as const,
   };

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { useConfirmBooking, useRejectBooking } from '@/queries/bookings';
 import type { AdminVehicleBooking } from '@/types/admin/bookings';
 
@@ -88,7 +89,7 @@ export function BookingDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+        <SheetContent className={adminDetailSheetClassName}>
           {!booking ? (
             <div className="space-y-4 px-6 py-6">
               <Skeleton className="h-8 w-2/3" />

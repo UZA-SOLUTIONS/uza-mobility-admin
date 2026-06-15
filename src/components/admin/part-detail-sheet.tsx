@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { PartActions } from '@/components/admin/part-actions';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { partDisplayStatus } from '@/lib/admin/part-status';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
@@ -58,7 +59,7 @@ export function PartDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl lg:max-w-3xl">
+      <SheetContent className={adminDetailSheetClassName}>
         {isLoading ? (
           <div className="space-y-4 px-6 py-6">
             <Skeleton className="h-8 w-2/3" />

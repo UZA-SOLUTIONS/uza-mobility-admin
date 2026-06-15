@@ -105,7 +105,6 @@ export function FleetInvoiceFormDialog({
       userId: '',
       listingId: '',
       totalAmountUsd: 0,
-      totalAmountRwf: undefined,
       notes: '',
     },
   });
@@ -123,7 +122,6 @@ export function FleetInvoiceFormDialog({
       userId: '',
       listingId: '',
       totalAmountUsd: 0,
-      totalAmountRwf: undefined,
       notes: '',
     });
   }, [open, form]);
@@ -264,33 +262,19 @@ export function FleetInvoiceFormDialog({
             </div>
           ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="fleet-usd">Total (USD)</Label>
-              <NumberInput
-                id="fleet-usd"
-                min={0}
-                step="0.01"
-                {...form.register('totalAmountUsd', numberRegisterOptions())}
-              />
-              {form.formState.errors.totalAmountUsd ? (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.totalAmountUsd.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="fleet-rwf">Total (RWF, optional)</Label>
-              <NumberInput
-                id="fleet-rwf"
-                min={0}
-                step="1"
-                {...form.register('totalAmountRwf', numberRegisterOptions())}
-              />
-              <p className="text-xs text-muted-foreground">
-                Leave blank to auto-convert from the listing or default rate.
+          <div className="space-y-1.5">
+            <Label htmlFor="fleet-usd">Total (USD)</Label>
+            <NumberInput
+              id="fleet-usd"
+              min={0}
+              step="0.01"
+              {...form.register('totalAmountUsd', numberRegisterOptions())}
+            />
+            {form.formState.errors.totalAmountUsd ? (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.totalAmountUsd.message}
               </p>
-            </div>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">

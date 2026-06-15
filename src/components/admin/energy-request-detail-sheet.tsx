@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDateTime } from '@/lib/admin/format';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { useUpdateEnergyRequestStatus } from '@/queries/operations';
 import {
   energyRequestStatuses,
@@ -59,7 +60,7 @@ export function EnergyRequestDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+      <SheetContent className={adminDetailSheetClassName}>
         {request ? (
           <>
             <SheetHeader>

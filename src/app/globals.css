@@ -105,12 +105,14 @@
   color: var(--foreground);
 }
 
-.auth-surface [data-slot='input'] {
+.auth-surface [data-slot='input'],
+.auth-surface .auth-input {
   background-color: oklch(1 0 0);
   color: var(--foreground);
 }
 
-.dark .auth-surface [data-slot='input'] {
+.dark .auth-surface [data-slot='input'],
+.dark .auth-surface .auth-input {
   background-color: oklch(1 0 0);
   color: var(--foreground);
 }

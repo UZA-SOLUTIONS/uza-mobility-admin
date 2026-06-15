@@ -84,10 +84,11 @@ export function useAdminActivityLogs(filters: ActivityLogsFilters) {
   });
 }
 
-export function useAdminPricingRules() {
+export function useAdminPricingRules(enabled = true) {
   return useQuery({
     queryKey: platformKeys.pricingRules(),
     queryFn: getAdminPricingRules,
+    enabled,
   });
 }
 

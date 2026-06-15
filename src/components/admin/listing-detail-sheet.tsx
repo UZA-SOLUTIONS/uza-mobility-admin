@@ -6,6 +6,7 @@ import { ListingActions } from '@/components/admin/listing-actions';
 import { canAdminEditOwnListing } from '@/lib/admin/listing-form';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import type { AdminListing } from '@/types/admin/marketplace';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +52,7 @@ export function ListingDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl lg:max-w-3xl">
+      <SheetContent className={adminDetailSheetClassName}>
         <SheetHeader className="border-b px-6 py-5">
           <SheetTitle className="text-xl">{listing.listingTitle}</SheetTitle>
           <SheetDescription>

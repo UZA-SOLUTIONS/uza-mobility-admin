@@ -43,28 +43,21 @@ type AdminListingFormFlattenKeys =
   | 'batteryHealthPercent'
   | 'batteryCapacityKwh'
   | 'batteryHealthReport'
-  | 'chargingType'
   | 'fastChargingSupported'
   | 'chargingTimeHours'
   | 'motorPowerKw'
   | 'topSpeedKmh'
   | 'payloadCapacityKg'
   | 'grossVehicleWeightKg'
-  | 'seatingCapacity'
   | 'basePriceUsd'
   | 'fobPriceUsd'
-  | 'discountUsd';
+  | 'discountUsd'
+  | 'pricingRuleId';
 
 type AdminListingApiExtras = {
   isNew: boolean;
-  pricing: {
-    basePriceUsd?: number;
-    fobPriceUsd?: number;
-    discountUsd?: number;
-  };
   evSpecs: {
     rangeKm: number;
-    chargingType: string;
     batteryHealthPercent?: number;
     batteryCapacityKwh?: number;
     batteryHealthReport?: boolean;
@@ -74,7 +67,12 @@ type AdminListingApiExtras = {
     topSpeedKmh?: number;
     payloadCapacityKg?: number;
     grossVehicleWeightKg?: number;
-    seatingCapacity?: number;
+  };
+  pricing: {
+    basePriceUsd?: number;
+    fobPriceUsd?: number;
+    discountUsd?: number;
+    pricingRuleId?: string;
   };
 };
 
@@ -97,7 +95,7 @@ function buildAdminListingApiBody(
     basePriceUsd,
     fobPriceUsd,
     discountUsd,
-    subcategoryId,
+    pricingRuleId,
     description,
     trim,
     mileageKm,
@@ -105,21 +103,18 @@ function buildAdminListingApiBody(
     batteryHealthPercent,
     batteryCapacityKwh,
     batteryHealthReport,
-    chargingType,
     fastChargingSupported,
     chargingTimeHours,
     motorPowerKw,
     topSpeedKmh,
     payloadCapacityKg,
     grossVehicleWeightKg,
-    seatingCapacity,
     useCases,
     ...rest
   } = input;
 
   const evSpecs = {
     rangeKm: rangeKm!,
-    chargingType: chargingType!,
     batteryHealthPercent:
       input.condition === 'NEW' ? undefined : batteryHealthPercent,
     ...(batteryCapacityKwh != null ? { batteryCapacityKwh } : {}),
@@ -130,13 +125,11 @@ function buildAdminListingApiBody(
     ...(topSpeedKmh != null ? { topSpeedKmh } : {}),
     ...(payloadCapacityKg != null ? { payloadCapacityKg } : {}),
     ...(grossVehicleWeightKg != null ? { grossVehicleWeightKg } : {}),
-    ...(seatingCapacity != null ? { seatingCapacity } : {}),
   };
 
   return {
     ...rest,
     isNew: input.condition === 'NEW',
-    subcategoryId: subcategoryId?.trim() || undefined,
     description: description?.trim() || undefined,
     trim: trim?.trim() || undefined,
     mileageKm,
@@ -149,6 +142,7 @@ function buildAdminListingApiBody(
         input.sellerType === 'UZA_CHINA_SOURCING' ? fobPriceUsd : undefined,
       discountUsd:
         discountUsd != null && discountUsd > 0 ? discountUsd : undefined,
+      pricingRuleId,
     },
   };
 }

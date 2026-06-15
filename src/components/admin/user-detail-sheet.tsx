@@ -15,6 +15,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/admin/format';
+import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useActivateAdminUser,
   useDeactivateAdminUser,
@@ -68,7 +69,7 @@ export function UserDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-lg">
+        <SheetContent className={adminDetailSheetClassName}>
           {user ? (
             <>
               <SheetHeader className="border-b px-6 py-5">
