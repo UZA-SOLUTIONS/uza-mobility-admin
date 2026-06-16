@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   downloadAdminInvoiceDocument,
@@ -88,7 +88,7 @@ export function InvoiceDetailSheet({
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Total (USD)</dt>
                     <dd className="font-medium">
-                      {formatUsd(invoice.totalAmountUsd)}
+                      {formatUsd(invoice.totalAmountUsd)} {invoice.currency}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
@@ -101,8 +101,20 @@ export function InvoiceDetailSheet({
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Listing</dt>
-                    <dd>{invoice.listing?.listingTitle ?? '—'}</dd>
+                    <dd>
+                      {invoice.listing?.listingTitle ??
+                        invoice.listingTitle ??
+                        '—'}
+                    </dd>
                   </div>
+                  {invoice.listing?.slug ? (
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Listing slug</dt>
+                      <dd className="font-mono text-xs">
+                        {invoice.listing.slug}
+                      </dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Issued</dt>
                     <dd>{formatDate(invoice.issuedAt)}</dd>
@@ -119,7 +131,44 @@ export function InvoiceDetailSheet({
                     <dt className="text-muted-foreground">Created</dt>
                     <dd>{formatDate(invoice.createdAt)}</dd>
                   </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Updated</dt>
+                    <dd>{formatDateTime(invoice.updatedAt)}</dd>
+                  </div>
                 </dl>
+
+                {invoice.beneficiaryName ||
+                invoice.bankName ||
+                invoice.accountNumber ? (
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    <p className="col-span-full text-sm font-medium">
+                      Bank details
+                    </p>
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Beneficiary</dt>
+                      <dd>{invoice.beneficiaryName ?? '—'}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Bank</dt>
+                      <dd>{invoice.bankName ?? '—'}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Account number</dt>
+                      <dd className="font-mono text-xs">
+                        {invoice.accountNumber ?? '—'}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : null}
+
+                {invoice.notes ? (
+                  <div className="space-y-1 text-sm">
+                    <p className="font-medium">Notes</p>
+                    <p className="whitespace-pre-wrap text-muted-foreground">
+                      {invoice.notes}
+                    </p>
+                  </div>
+                ) : null}
 
                 {invoice.payments && invoice.payments.length > 0 ? (
                   <div className="space-y-2">

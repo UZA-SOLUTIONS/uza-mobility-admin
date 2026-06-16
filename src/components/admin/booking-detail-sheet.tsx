@@ -18,6 +18,7 @@ import {
 import { usePermissions } from '@/hooks/permissions';
 import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
+import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import { useConfirmBooking, useRejectBooking } from '@/queries/bookings';
 import type { AdminVehicleBooking } from '@/types/admin/bookings';
 
@@ -114,7 +115,7 @@ export function BookingDetailSheet({
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Booking fee</dt>
                     <dd className="font-medium">
-                      {formatUsd(booking.bookingFeeUsd)}
+                      {formatUsd(booking.bookingFeeUsd)} {booking.currency}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
@@ -138,6 +139,14 @@ export function BookingDetailSheet({
                     <dd>{booking.user?.email ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Phone</dt>
+                    <dd>{booking.user?.phone ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Sender</dt>
+                    <dd>{booking.senderName ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Bank</dt>
                     <dd>{booking.bankName ?? '—'}</dd>
                   </div>
@@ -152,10 +161,52 @@ export function BookingDetailSheet({
                     <dd>{formatDate(booking.paymentDate)}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Valid until</dt>
+                    <dd>{formatDate(booking.validUntil)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Confirmed</dt>
+                    <dd>{formatDateTime(booking.confirmedAt)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Created</dt>
+                    <dd>{formatDateTime(booking.createdAt)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Submitted</dt>
                     <dd>{formatDateTime(booking.updatedAt)}</dd>
                   </div>
                 </dl>
+
+                {booking.listing ? (
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    <p className="col-span-full text-sm font-medium">Vehicle</p>
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Title</dt>
+                      <dd>{booking.listing.listingTitle}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Make / model</dt>
+                      <dd>
+                        {booking.listing.brand} {booking.listing.model}
+                      </dd>
+                    </div>
+                    {booking.listing.sellerType ? (
+                      <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                        <dt className="text-muted-foreground">Channel</dt>
+                        <dd>
+                          {formatSellerChannel(booking.listing.sellerType)}
+                        </dd>
+                      </div>
+                    ) : null}
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Slug</dt>
+                      <dd className="font-mono text-xs">
+                        {booking.listing.slug}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : null}
 
                 {booking.notes ? (
                   <div className="space-y-1 text-sm">

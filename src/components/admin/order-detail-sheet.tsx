@@ -113,20 +113,32 @@ export function OrderDetailSheet({
                     <dd>{order.invoice.invoiceNumber}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Payment ref</dt>
+                    <dd className="font-mono text-xs">
+                      {order.invoice.paymentReference}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Listing slug</dt>
+                    <dd className="font-mono text-xs">{order.listing.slug}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Amount</dt>
                     <dd className="font-medium">
                       {formatUsd(order.invoice.totalAmountUsd)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Delivery</dt>
+                    <dt className="text-muted-foreground">Delivery city</dt>
                     <dd>
                       {[order.deliveryCity, order.deliveryCountry]
                         .filter(Boolean)
-                        .join(', ') ||
-                        order.deliveryAddress ||
-                        '—'}
+                        .join(', ') || '—'}
                     </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Delivery address</dt>
+                    <dd>{order.deliveryAddress ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Est. delivery</dt>
@@ -168,6 +180,7 @@ export function OrderDetailSheet({
                           <span className="absolute top-1.5 -left-[21px] size-2.5 rounded-full bg-primary" />
                           <p className="font-medium">{event.title}</p>
                           <p className="text-xs text-muted-foreground">
+                            {event.stage.replaceAll('_', ' ')} ·{' '}
                             {formatDateTime(event.occurredAt)}
                             {event.location ? ` · ${event.location}` : ''}
                           </p>

@@ -52,6 +52,13 @@ import {
 } from '@/lib/api/categories';
 import type { AdminCategoriesFilters } from '@/lib/api/categories';
 import { ApiClientError } from '@/lib/api';
+import {
+  invalidateCategoryQueries,
+  invalidateListingQueries,
+  invalidatePartQueries,
+  invalidateSellerQueries,
+  invalidateStationQueries,
+} from '@/lib/query/invalidate-admin';
 import type {
   AdminOperatorFilters,
   AdminStationFilters,
@@ -145,7 +152,7 @@ export function useCreateAdminListing() {
       ),
     onSuccess: () => {
       toast.success('Listing created');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -177,7 +184,7 @@ export function useUpdateAdminListing() {
       ),
     onSuccess: () => {
       toast.success('Listing updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -190,7 +197,7 @@ export function useApproveListing() {
     mutationFn: approveListing,
     onSuccess: () => {
       toast.success('Listing approved');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -203,7 +210,7 @@ export function usePublishListing() {
     mutationFn: publishListing,
     onSuccess: () => {
       toast.success('Listing published');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -216,7 +223,7 @@ export function useUnpublishListing() {
     mutationFn: unpublishListing,
     onSuccess: () => {
       toast.success('Listing unpublished');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -230,7 +237,7 @@ export function useRejectListing() {
       rejectListing(id, body),
     onSuccess: () => {
       toast.success('Listing rejected');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -243,7 +250,7 @@ export function useFeatureListing() {
     mutationFn: featureListing,
     onSuccess: () => {
       toast.success('Featured flag updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -256,7 +263,7 @@ export function useHotDealListing() {
     mutationFn: hotDealListing,
     onSuccess: () => {
       toast.success('Hot deal flag updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -269,7 +276,7 @@ export function useDeleteListing() {
     mutationFn: deleteListing,
     onSuccess: () => {
       toast.success('Listing deleted');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -290,7 +297,7 @@ export function useUpdateListingVerification() {
     }) => updateListingVerification(id, body, files),
     onSuccess: () => {
       toast.success('Verification updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -320,7 +327,7 @@ export function useVerifySeller() {
     mutationFn: verifySeller,
     onSuccess: () => {
       toast.success('Seller verified');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateSellerQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -334,7 +341,7 @@ export function useSuspendSeller() {
       suspendSeller(id, body),
     onSuccess: () => {
       toast.success('Seller suspended');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateSellerQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -347,7 +354,7 @@ export function useReactivateSeller() {
     mutationFn: reactivateSeller,
     onSuccess: () => {
       toast.success('Seller reactivated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateSellerQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -369,7 +376,7 @@ export function useActivatePart() {
     mutationFn: activatePart,
     onSuccess: () => {
       toast.success('Part published');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -382,7 +389,7 @@ export function useDeactivatePart() {
     mutationFn: deactivatePart,
     onSuccess: () => {
       toast.success('Part unpublished');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -395,7 +402,7 @@ export function useApprovePart() {
     mutationFn: approvePart,
     onSuccess: () => {
       toast.success('Part approved');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -409,7 +416,7 @@ export function useRejectPart() {
       rejectPart(id, body),
     onSuccess: () => {
       toast.success('Part rejected');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -436,7 +443,7 @@ export function useCreatePart() {
     }) => createPart(body, photos),
     onSuccess: () => {
       toast.success('Part created');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -457,7 +464,7 @@ export function useUpdatePart() {
     }) => updatePart(id, body, photos),
     onSuccess: () => {
       toast.success('Part updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -470,7 +477,7 @@ export function useDeletePart() {
     mutationFn: deletePart,
     onSuccess: () => {
       toast.success('Part deleted');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidatePartQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -495,7 +502,7 @@ export function useCreateCategory() {
     mutationFn: (body: CreateCategoryInput) => createCategory(body),
     onSuccess: () => {
       toast.success('Category created');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -509,7 +516,7 @@ export function useUpdateCategory() {
       updateCategory(id, body),
     onSuccess: () => {
       toast.success('Category updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -530,7 +537,7 @@ export function useUpdateSubcategory() {
     }) => updateSubcategory(categoryId, subId, body),
     onSuccess: () => {
       toast.success('Subcategory updated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -543,7 +550,7 @@ export function useDeactivateCategory() {
     mutationFn: deactivateCategory,
     onSuccess: () => {
       toast.success('Category deactivated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -556,7 +563,7 @@ export function useReactivateCategory() {
     mutationFn: reactivateCategory,
     onSuccess: () => {
       toast.success('Category reactivated');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -569,7 +576,7 @@ export function usePermanentlyDeleteCategory() {
     mutationFn: permanentlyDeleteCategory,
     onSuccess: () => {
       toast.success('Category deleted permanently');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -588,7 +595,7 @@ export function useAddSubcategory() {
     }) => addSubcategory(categoryId, body),
     onSuccess: () => {
       toast.success('Subcategory added');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -607,7 +614,7 @@ export function useDeleteSubcategory() {
     }) => deleteSubcategory(categoryId, subId),
     onSuccess: () => {
       toast.success('Subcategory deleted');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateCategoryQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -631,7 +638,7 @@ export function useApproveAdminOperator() {
     mutationFn: approveAdminOperator,
     onSuccess: () => {
       toast.success('Operator approved');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateStationQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -649,7 +656,7 @@ export function useRejectAdminOperator() {
     }) => rejectAdminOperator(id, body),
     onSuccess: () => {
       toast.success('Operator rejected');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateStationQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -670,7 +677,7 @@ export function useApproveAdminStation() {
     mutationFn: approveAdminStation,
     onSuccess: () => {
       toast.success('Station approved');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateStationQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -688,7 +695,7 @@ export function useRejectAdminStation() {
     }) => rejectAdminStation(id, body),
     onSuccess: () => {
       toast.success('Station rejected');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateStationQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -706,7 +713,7 @@ export function useSuspendAdminStation() {
     }) => suspendAdminStation(id, body),
     onSuccess: () => {
       toast.success('Station suspended');
-      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      invalidateStationQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });

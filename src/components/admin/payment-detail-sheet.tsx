@@ -136,6 +136,24 @@ export function PaymentDetailSheet({
                     <dd>{formatDateTime(payment.createdAt)}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Updated</dt>
+                    <dd>{formatDateTime(payment.updatedAt)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Verified by</dt>
+                    <dd>{payment.verifiedBy ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Verified at</dt>
+                    <dd>{formatDateTime(payment.verifiedAt)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">
+                      Bank statement ref
+                    </dt>
+                    <dd>{payment.bankStatementRef ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Invoice status</dt>
                     <dd>
                       <StatusBadge status={payment.invoice.status} />

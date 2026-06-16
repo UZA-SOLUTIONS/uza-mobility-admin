@@ -5,6 +5,7 @@ import { PartActions } from '@/components/admin/part-actions';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { partDisplayStatus } from '@/lib/admin/part-status';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
+import { formatDate, formatDateTime } from '@/lib/admin/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
@@ -152,6 +153,22 @@ export function PartDetailSheet({
                     <dd>{part.deliveryEstimate}</dd>
                   </div>
                 ) : null}
+                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                  <dt className="text-muted-foreground">Active</dt>
+                  <dd>{part.isActive ? 'Yes' : 'No'}</dd>
+                </div>
+                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                  <dt className="text-muted-foreground">Seller ID</dt>
+                  <dd className="font-mono text-xs">{part.sellerId ?? '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                  <dt className="text-muted-foreground">Created</dt>
+                  <dd>{formatDateTime(part.createdAt)}</dd>
+                </div>
+                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                  <dt className="text-muted-foreground">Updated</dt>
+                  <dd>{formatDateTime(part.updatedAt)}</dd>
+                </div>
                 {part.hasWarranty ? (
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Warranty</dt>

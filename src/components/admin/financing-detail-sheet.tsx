@@ -145,6 +145,14 @@ export function FinancingDetailSheet({
                     <dt className="text-muted-foreground">Linked invoice</dt>
                     <dd>{request.invoice?.invoiceNumber ?? '—'}</dd>
                   </div>
+                  {request.invoice ? (
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Invoice status</dt>
+                      <dd>
+                        <StatusBadge status={request.invoice.status} />
+                      </dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Invoice amount</dt>
                     <dd>

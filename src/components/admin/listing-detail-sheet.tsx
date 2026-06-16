@@ -1,9 +1,19 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { ListingActions } from '@/components/admin/listing-actions';
+import {
+  DetailRow,
+  DetailSection,
+  formatDateTime,
+  formatEnumLabel,
+  formatRegistrationStatus,
+  formatUsd,
+} from '@/components/admin/shared/detail-fields';
 import { canAdminEditOwnListing } from '@/lib/admin/listing-form';
+import { parseListingPricingRuleId } from '@/lib/admin/listing-pricing';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
@@ -16,15 +26,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-
-function formatUsd(value: number | null | undefined) {
-  if (value == null) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 type ListingDetailSheetProps = {
   listing: AdminListing | null;
@@ -50,13 +51,20 @@ export function ListingDetailSheet({
 
   if (!listing) return null;
 
+  const pricing = listing.listingPricing;
+  const pricingRuleId = parseListingPricingRuleId(pricing?.priceNotes);
+  const ev = listing.evSpecs;
+  const verification = listing.verificationReport;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={adminDetailSheetClassName}>
+      <SheetContent className={`${adminDetailSheetClassName} overflow-y-auto`}>
         <SheetHeader className="border-b px-6 py-5">
           <SheetTitle className="text-xl">{listing.listingTitle}</SheetTitle>
           <SheetDescription>
-            {listing.brand} {listing.model} · {listing.manufacturingYear}
+            {listing.brand} {listing.model}
+            {listing.trim ? ` ${listing.trim}` : ''} ·{' '}
+            {listing.manufacturingYear}
           </SheetDescription>
         </SheetHeader>
 
@@ -74,6 +82,11 @@ export function ListingDetailSheet({
             {listing.isHotDeal ? (
               <span className="rounded bg-muted px-2 py-0.5 text-xs">
                 Hot deal
+              </span>
+            ) : null}
+            {listing.isFullOption ? (
+              <span className="rounded bg-muted px-2 py-0.5 text-xs">
+                Full option
               </span>
             ) : null}
           </div>
@@ -100,52 +113,323 @@ export function ListingDetailSheet({
             <p className="text-sm text-muted-foreground">No photos uploaded.</p>
           )}
 
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-              <dt className="text-muted-foreground">Price</dt>
-              <dd className="font-medium">
-                {formatUsd(listing.listingPricing?.finalPriceUsd)}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-              <dt className="text-muted-foreground">Seller profile</dt>
-              <dd className="font-medium">{listing.seller.businessName}</dd>
-            </div>
+          <DetailSection title="Overview">
+            <DetailRow label="Slug" value={listing.slug} />
+            <DetailRow
+              label="Verification"
+              value={formatEnumLabel(listing.verificationLevel)}
+            />
+            <DetailRow
+              label="Category"
+              value={`${listing.category.name}${listing.subcategory ? ` · ${listing.subcategory.name}` : ''}`}
+            />
+            <DetailRow
+              label="Location"
+              value={
+                [listing.city, listing.country].filter(Boolean).join(', ') ||
+                listing.vehicleLocation ||
+                '—'
+              }
+            />
+            <DetailRow
+              label="Delivery estimate"
+              value={
+                listing.deliveryEstimateDays != null
+                  ? `${listing.deliveryEstimateDays} days`
+                  : '—'
+              }
+            />
+            <DetailRow
+              label="Created"
+              value={formatDateTime(listing.createdAt)}
+            />
+            <DetailRow
+              label="Updated"
+              value={formatDateTime(listing.updatedAt)}
+            />
+            <DetailRow
+              label="Published"
+              value={formatDateTime(listing.publishedAt)}
+            />
+          </DetailSection>
+
+          <DetailSection title="Vehicle">
+            <DetailRow
+              label="Condition"
+              value={formatEnumLabel(listing.condition)}
+            />
+            <DetailRow
+              label="Body type"
+              value={formatEnumLabel(listing.bodyType)}
+            />
+            <DetailRow
+              label="Powertrain"
+              value={formatEnumLabel(listing.powertrainType)}
+            />
+            <DetailRow label="Color" value={listing.color} />
+            <DetailRow label="Seats" value={listing.seats} />
+            <DetailRow
+              label="Steering"
+              value={formatEnumLabel(listing.steeringPosition)}
+            />
+            <DetailRow
+              label="Drivetrain"
+              value={formatEnumLabel(listing.drivetrain)}
+            />
+            <DetailRow
+              label="Mileage"
+              value={
+                listing.mileageKm != null
+                  ? `${listing.mileageKm.toLocaleString()} km`
+                  : '—'
+              }
+            />
+            <DetailRow
+              label="Registration"
+              value={formatRegistrationStatus(listing.registrationStatus)}
+            />
+            <DetailRow label="Ownership count" value={listing.ownershipCount} />
+            <DetailRow
+              label="Warranty"
+              value={listing.hasWarranty ? 'Yes' : 'No'}
+            />
+            {listing.hasWarranty && listing.warrantyDetails ? (
+              <DetailRow
+                label="Warranty details"
+                value={listing.warrantyDetails}
+              />
+            ) : null}
+            <DetailRow
+              label="Accident history"
+              value={listing.hasAccidentHistory ? 'Yes' : 'No'}
+            />
+          </DetailSection>
+
+          {ev ? (
+            <DetailSection title="EV specifications">
+              <DetailRow
+                label="Range"
+                value={ev.rangeKm != null ? `${ev.rangeKm} km` : '—'}
+              />
+              <DetailRow
+                label="Battery"
+                value={
+                  ev.batteryCapacityKwh != null
+                    ? `${ev.batteryCapacityKwh} kWh`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="Battery health"
+                value={
+                  ev.batteryHealthPercent != null
+                    ? `${ev.batteryHealthPercent}%`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="Health report"
+                value={ev.batteryHealthReport ? 'Available' : 'No'}
+              />
+              <DetailRow label="Charging type" value={ev.chargingType} />
+              <DetailRow
+                label="Fast charging"
+                value={ev.fastChargingSupported ? 'Yes' : 'No'}
+              />
+              <DetailRow
+                label="Charge time"
+                value={
+                  ev.chargingTimeHours != null
+                    ? `${ev.chargingTimeHours} hrs`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="Motor power"
+                value={ev.motorPowerKw != null ? `${ev.motorPowerKw} kW` : '—'}
+              />
+              <DetailRow
+                label="Top speed"
+                value={ev.topSpeedKmh != null ? `${ev.topSpeedKmh} km/h` : '—'}
+              />
+              <DetailRow
+                label="Payload"
+                value={
+                  ev.payloadCapacityKg != null
+                    ? `${ev.payloadCapacityKg} kg`
+                    : '—'
+                }
+              />
+              <DetailRow
+                label="GVW"
+                value={
+                  ev.grossVehicleWeightKg != null
+                    ? `${ev.grossVehicleWeightKg} kg`
+                    : '—'
+                }
+              />
+            </DetailSection>
+          ) : null}
+
+          <DetailSection title="Pricing">
+            <DetailRow
+              label="List price"
+              value={formatUsd(pricing?.finalPriceUsd)}
+            />
+            {pricing?.basePriceUsd != null ? (
+              <DetailRow
+                label="Base price"
+                value={formatUsd(pricing.basePriceUsd)}
+              />
+            ) : null}
+            {pricing?.fobPriceUsd != null ? (
+              <DetailRow
+                label="FOB price"
+                value={formatUsd(pricing.fobPriceUsd)}
+              />
+            ) : null}
+            {pricing?.discountUsd != null && pricing.discountUsd > 0 ? (
+              <DetailRow
+                label="Discount"
+                value={formatUsd(pricing.discountUsd)}
+              />
+            ) : null}
+            <DetailRow label="Currency" value={pricing?.currency ?? 'USD'} />
+            <DetailRow label="Pricing rule ID" value={pricingRuleId} />
+          </DetailSection>
+
+          <DetailSection title="Seller & creator">
+            <DetailRow label="Seller" value={listing.seller.businessName} />
+            <DetailRow
+              label="Seller location"
+              value={[listing.seller.city, listing.seller.country]
+                .filter(Boolean)
+                .join(', ')}
+            />
+            <DetailRow
+              label="Seller verified"
+              value={listing.seller.isVerified ? 'Yes' : 'No'}
+            />
             {listing.createdBy ? (
-              <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                <dt className="text-muted-foreground">Created by</dt>
-                <dd>
-                  {listing.createdBy.firstName} {listing.createdBy.lastName}
-                </dd>
-              </div>
+              <>
+                <DetailRow
+                  label="Created by"
+                  value={`${listing.createdBy.firstName} ${listing.createdBy.lastName}`}
+                />
+                <DetailRow
+                  label="Creator email"
+                  value={listing.createdBy.email}
+                />
+              </>
             ) : null}
-            <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-              <dt className="text-muted-foreground">Category</dt>
-              <dd>
-                {listing.category.name}
-                {listing.subcategory ? ` · ${listing.subcategory.name}` : ''}
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-              <dt className="text-muted-foreground">Location</dt>
-              <dd>
-                {[listing.city, listing.country].filter(Boolean).join(', ') ||
-                  listing.vehicleLocation ||
-                  '—'}
-              </dd>
-            </div>
-            {listing.mileageKm != null ? (
-              <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                <dt className="text-muted-foreground">Mileage</dt>
-                <dd>{listing.mileageKm.toLocaleString()} km</dd>
-              </div>
-            ) : null}
-          </dl>
+          </DetailSection>
+
+          {listing.useCaseTags && listing.useCaseTags.length > 0 ? (
+            <DetailSection title="Use cases">
+              <DetailRow
+                label="Tags"
+                value={listing.useCaseTags
+                  .map((tag) => formatEnumLabel(tag.useCase))
+                  .join(', ')}
+                className="sm:col-span-2"
+              />
+            </DetailSection>
+          ) : null}
+
+          {verification ? (
+            <DetailSection title="Verification report">
+              <DetailRow
+                label="Level"
+                value={formatEnumLabel(verification.verificationLevel)}
+              />
+              <DetailRow
+                label="Inspection"
+                value={verification.inspectionStatus}
+              />
+              <DetailRow
+                label="Battery report"
+                value={verification.batteryReportStatus}
+              />
+              <DetailRow
+                label="Documents"
+                value={verification.documentStatus}
+              />
+              <DetailRow
+                label="Verified at"
+                value={formatDateTime(verification.verifiedAt)}
+              />
+              {verification.reportUrl ? (
+                <DetailRow
+                  label="Report"
+                  value={
+                    <Link
+                      href={verification.reportUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      View report
+                    </Link>
+                  }
+                />
+              ) : null}
+              {verification.batteryReportUrl ? (
+                <DetailRow
+                  label="Battery report file"
+                  value={
+                    <Link
+                      href={verification.batteryReportUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      View battery report
+                    </Link>
+                  }
+                />
+              ) : null}
+            </DetailSection>
+          ) : null}
+
+          {(listing.videoUrl || listing.brochureUrl) && (
+            <DetailSection title="Media">
+              {listing.videoUrl ? (
+                <DetailRow
+                  label="Video"
+                  value={
+                    <Link
+                      href={listing.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      Open video
+                    </Link>
+                  }
+                />
+              ) : null}
+              {listing.brochureUrl ? (
+                <DetailRow
+                  label="Brochure"
+                  value={
+                    <Link
+                      href={listing.brochureUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline"
+                    >
+                      Download brochure
+                    </Link>
+                  }
+                />
+              ) : null}
+            </DetailSection>
+          )}
 
           {listing.description ? (
             <div className="space-y-1">
               <p className="text-sm font-medium">Description</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground">
                 {listing.description}
               </p>
             </div>

@@ -15,6 +15,7 @@ import {
   submitBookingPayment,
 } from '@/lib/api/bookings';
 import { buildMultipartFormData } from '@/lib/api/multipart';
+import { invalidateAdminBookings } from '@/lib/query/invalidate-admin';
 import type { VehicleBooking } from '@/types/buyer/bookings';
 
 type PaginatedBookings = {
@@ -164,7 +165,7 @@ export function useConfirmBooking() {
   return useMutation({
     mutationFn: adminConfirmBooking,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      invalidateAdminBookings(queryClient);
       toast.success('Booking confirmed');
     },
     onError: (error) => toastError(error, 'Unable to confirm booking'),
@@ -177,7 +178,7 @@ export function useRejectBooking() {
     mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
       adminRejectBooking(id, { reason }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      invalidateAdminBookings(queryClient);
       toast.success('Booking rejected');
     },
     onError: (error) => toastError(error, 'Unable to reject booking'),
@@ -195,7 +196,7 @@ export function useUpdateBookingFee() {
       bookingFeeUsd: number;
     }) => adminUpdateBookingFee(id, { bookingFeeUsd }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      invalidateAdminBookings(queryClient);
       toast.success('Booking fee updated');
     },
     onError: (error) => toastError(error, 'Unable to update booking fee'),

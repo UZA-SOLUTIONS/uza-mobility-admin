@@ -4,6 +4,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ApiClientError } from '@/lib/api';
 import {
+  invalidateCommerceFinancing,
+  invalidateCommerceFleetInvoice,
+  invalidateCommerceInvoices,
+  invalidateCommerceOrders,
+  invalidateCommercePayments,
+} from '@/lib/query/invalidate-admin';
+import {
   advanceOrder,
   assignFinancingBank,
   cancelInvoice,
@@ -86,8 +93,7 @@ export function useConfirmPayment() {
     mutationFn: confirmPayment,
     onSuccess: () => {
       toast.success('Payment confirmed');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommercePayments(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -100,8 +106,7 @@ export function useRejectPayment() {
       rejectPayment(id, body),
     onSuccess: () => {
       toast.success('Payment rejected');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommercePayments(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -114,8 +119,7 @@ export function useMarkPartialPayment() {
       markPartialPayment(id, body),
     onSuccess: () => {
       toast.success('Invoice marked as partially paid');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommercePayments(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -147,8 +151,7 @@ export function useCancelInvoice() {
     mutationFn: cancelInvoice,
     onSuccess: () => {
       toast.success('Invoice cancelled');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommerceInvoices(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -180,8 +183,7 @@ export function useCreateFleetInvoice() {
     }) => createFleetInvoice(buyer, body, listing),
     onSuccess: (invoice) => {
       toast.success(`Fleet invoice ${invoice.invoiceNumber} created`);
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommerceFleetInvoice(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -211,8 +213,7 @@ export function useAdvanceOrder() {
       advanceOrder(id, body),
     onSuccess: () => {
       toast.success('Order advanced to next stage');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommerceOrders(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -224,8 +225,7 @@ export function useCancelOrder() {
     mutationFn: cancelOrder,
     onSuccess: () => {
       toast.success('Order cancelled');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      invalidateCommerceOrders(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -258,7 +258,7 @@ export function useAssignFinancingBank() {
       assignFinancingBank(id, body),
     onSuccess: () => {
       toast.success('Request sent to bank');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
+      invalidateCommerceFinancing(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });
@@ -271,7 +271,7 @@ export function useRecordFinancingOutcome() {
       recordFinancingOutcome(id, body),
     onSuccess: () => {
       toast.success('Financing outcome recorded');
-      void queryClient.invalidateQueries({ queryKey: commerceKeys.all });
+      invalidateCommerceFinancing(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
   });

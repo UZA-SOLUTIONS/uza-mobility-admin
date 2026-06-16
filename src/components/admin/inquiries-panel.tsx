@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+import { InquiryDetailSheet } from '@/components/admin/inquiry-detail-sheet';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
@@ -25,9 +27,18 @@ const STATUS_OPTIONS: InquiryStatus[] = [
 export function AdminInquiriesPanel() {
   const { data, isLoading, isError, error } = useAdminInquiries();
   const updateStatus = useUpdateInquiryStatus();
+  const [selectedInquiry, setSelectedInquiry] = useState<AdminInquiry | null>(
+    null,
+  );
+  const [detailOpen, setDetailOpen] = useState(false);
 
   const setStatus = (inquiry: AdminInquiry, status: InquiryStatus) => {
     updateStatus.mutate({ id: inquiry.id, status });
+  };
+
+  const openDetail = (inquiry: AdminInquiry) => {
+    setSelectedInquiry(inquiry);
+    setDetailOpen(true);
   };
 
   return (
@@ -69,6 +80,14 @@ export function AdminInquiriesPanel() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={inquiry.status} />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => openDetail(inquiry)}
+              >
+                View details
+              </Button>
               <Select
                 value={inquiry.status}
                 onValueChange={(value) =>
@@ -99,6 +118,12 @@ export function AdminInquiriesPanel() {
           </p>
         ) : null}
       </div>
+
+      <InquiryDetailSheet
+        inquiry={selectedInquiry}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+      />
     </div>
   );
 }
