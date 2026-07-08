@@ -30,6 +30,7 @@ export const adminRoutes = {
   users: '/admin/users',
   activityLogs: '/admin/activity-logs',
   pricingRules: '/admin/pricing-rules',
+  discountSales: '/admin/discount-sales',
   platformSettings: '/admin/platform-settings',
   settings: '/admin/settings',
   notifications: '/admin/notifications',

@@ -11,10 +11,12 @@ import {
   getAdminActivityLogs,
   getAdminPricingRules,
   getAdminUsers,
+  getDiscountSalesReport,
   updateAdminUserRoles,
   updatePricingRule,
 } from '@/lib/api/platform';
 import type { ActivityLogsFilters } from '@/types/admin/platform';
+import type { DiscountSalesFilters } from '@/types/admin/discount-sales';
 import type {
   AssignUserRolesInput,
   CreatePricingRuleInput,
@@ -27,6 +29,8 @@ export const platformKeys = {
   activityLogs: (filters: ActivityLogsFilters) =>
     [...platformKeys.all, 'activity-logs', filters] as const,
   pricingRules: () => [...platformKeys.all, 'pricing-rules'] as const,
+  discountSales: (filters: DiscountSalesFilters) =>
+    [...platformKeys.all, 'discount-sales', filters] as const,
 };
 
 function toastError(error: unknown, fallback: string) {
@@ -132,5 +136,12 @@ export function useDeactivatePricingRule() {
       });
     },
     onError: (error) => toastError(error, 'Failed to deactivate pricing rule'),
+  });
+}
+
+export function useDiscountSalesReport(filters: DiscountSalesFilters = {}) {
+  return useQuery({
+    queryKey: platformKeys.discountSales(filters),
+    queryFn: () => getDiscountSalesReport(filters),
   });
 }

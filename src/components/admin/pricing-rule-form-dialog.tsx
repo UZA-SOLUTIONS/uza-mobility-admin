@@ -69,6 +69,7 @@ export function PricingRuleFormDialog({
         clearingFeeUsd: rule.clearingFeeUsd ?? undefined,
         platformMarginPercent: rule.platformMarginPercent ?? undefined,
         commissionRate: rule.commissionRate ?? undefined,
+        discountRatePercent: rule.discountRatePercent ?? undefined,
         deliveryDaysMin: rule.deliveryDaysMin ?? undefined,
         deliveryDaysMax: rule.deliveryDaysMax ?? undefined,
         isActive: rule.isActive,
@@ -204,8 +205,19 @@ export function PricingRuleFormDialog({
               <Label htmlFor="pr-commission">Commission rate</Label>
               <NumberInput
                 id="pr-commission"
-                step="0.01"
+                step="any"
                 {...form.register('commissionRate', numberRegisterOptions())}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pr-discount">Discount %</Label>
+              <NumberInput
+                id="pr-discount"
+                step="any"
+                {...form.register(
+                  'discountRatePercent',
+                  numberRegisterOptions(),
+                )}
               />
             </div>
             <div className="space-y-1.5">

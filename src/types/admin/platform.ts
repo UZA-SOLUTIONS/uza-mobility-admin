@@ -68,6 +68,7 @@ export type PricingRule = {
   clearingFeeUsd: number | null;
   platformMarginPercent: number | null;
   commissionRate: number | null;
+  discountRatePercent: number | null;
   deliveryDaysMin: number | null;
   deliveryDaysMax: number | null;
   isActive: boolean;

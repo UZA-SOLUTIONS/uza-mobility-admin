@@ -5,7 +5,10 @@ export type PaginationMeta = {
   totalPages: number;
 };
 
-export type PaginatedResult<T> = {
+export type PaginatedResult<
+  T,
+  TMeta extends PaginationMeta = PaginationMeta,
+> = {
   items: T[];
-  meta: PaginationMeta;
+  meta: TMeta;
 };

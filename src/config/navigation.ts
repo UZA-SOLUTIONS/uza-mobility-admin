@@ -123,6 +123,12 @@ export const adminNavGroups: NavGroup[] = [
         permissions: ['invoices:read', 'invoices:send', 'invoices:cancel'],
       },
       {
+        label: 'Discount sales',
+        href: adminRoutes.discountSales,
+        icon: Percent,
+        permissions: ['invoices:read'],
+      },
+      {
         label: 'Financing',
         href: adminRoutes.financing,
         icon: DollarSign,

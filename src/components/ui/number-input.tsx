@@ -31,8 +31,17 @@ export function numberRegisterOptions(): NumberRegisterOptions {
 const NumberInput = React.forwardRef<
   HTMLInputElement,
   Omit<React.ComponentProps<'input'>, 'type'>
->(({ className, ...props }, ref) => {
-  return <Input ref={ref} type="number" className={cn(className)} {...props} />;
+>(({ className, step = 'any', ...props }, ref) => {
+  return (
+    <Input
+      ref={ref}
+      type="number"
+      step={step}
+      inputMode="decimal"
+      className={cn(className)}
+      {...props}
+    />
+  );
 });
 NumberInput.displayName = 'NumberInput';
 

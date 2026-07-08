@@ -140,7 +140,6 @@ export function ListingFormDialog({
   const pricingRuleId = form.watch('pricingRuleId');
   const basePriceUsd = form.watch('basePriceUsd');
   const fobPriceUsd = form.watch('fobPriceUsd');
-  const discountUsd = form.watch('discountUsd');
   const country = form.watch('country');
   const description = form.watch('description') ?? '';
   const descriptionWordCount = countWords(description);
@@ -198,7 +197,6 @@ export function ListingFormDialog({
         pricingRuleId,
         basePriceUsd,
         fobPriceUsd,
-        discountUsd,
       })
         .then(setPriceBreakdown)
         .catch(() => setPriceBreakdown(null))
@@ -206,15 +204,7 @@ export function ListingFormDialog({
     }, 400);
 
     return () => window.clearTimeout(timer);
-  }, [
-    open,
-    sellerType,
-    country,
-    pricingRuleId,
-    basePriceUsd,
-    fobPriceUsd,
-    discountUsd,
-  ]);
+  }, [open, sellerType, country, pricingRuleId, basePriceUsd, fobPriceUsd]);
 
   useEffect(() => {
     if (!open) return;
@@ -258,6 +248,7 @@ export function ListingFormDialog({
   }, [open, listing, form]);
 
   const onSubmit = form.handleSubmit((values) => {
+    const payload = { ...values, discountUsd: undefined };
     const newPhotos = pendingPhotoFiles(photos);
 
     if (isEdit && listing) {
@@ -268,7 +259,7 @@ export function ListingFormDialog({
       }
 
       const body = adminUpdateListingSchema.parse({
-        ...values,
+        ...payload,
         removePhotoIds:
           removedPhotoIds.length > 0 ? removedPhotoIds : undefined,
         removeVideo: removeVideo || undefined,
@@ -296,7 +287,7 @@ export function ListingFormDialog({
 
     create.mutate(
       {
-        body: adminCreateListingSchema.parse(values),
+        body: adminCreateListingSchema.parse(payload),
         photos: newPhotos,
         video: videoFile,
         brochure: brochureFile,
@@ -757,7 +748,6 @@ export function ListingFormDialog({
                 <NumberInput
                   id="battery-capacity"
                   min={0}
-                  step="0.1"
                   {...form.register(
                     'batteryCapacityKwh',
                     numberRegisterOptions(),
@@ -769,7 +759,6 @@ export function ListingFormDialog({
                 <NumberInput
                   id="charging-time"
                   min={0}
-                  step="0.1"
                   {...form.register(
                     'chargingTimeHours',
                     numberRegisterOptions(),
@@ -926,56 +915,34 @@ export function ListingFormDialog({
           </div>
 
           {sellerType === 'UZA_RWANDA_STOCK' ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="base-price">Base price (USD)</Label>
-                <NumberInput
-                  id="base-price"
-                  min={0}
-                  step="0.01"
-                  {...form.register('basePriceUsd', numberRegisterOptions())}
-                />
-                {form.formState.errors.basePriceUsd ? (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.basePriceUsd.message}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="discount">Discount (USD, optional)</Label>
-                <NumberInput
-                  id="discount"
-                  min={0}
-                  step="0.01"
-                  {...form.register('discountUsd', numberRegisterOptions())}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="base-price">Base price (USD)</Label>
+              <NumberInput
+                id="base-price"
+                min={0}
+                step="0.01"
+                {...form.register('basePriceUsd', numberRegisterOptions())}
+              />
+              {form.formState.errors.basePriceUsd ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.basePriceUsd.message}
+                </p>
+              ) : null}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="fob-price">FOB price (USD)</Label>
-                <NumberInput
-                  id="fob-price"
-                  min={0}
-                  step="0.01"
-                  {...form.register('fobPriceUsd', numberRegisterOptions())}
-                />
-                {form.formState.errors.fobPriceUsd ? (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.fobPriceUsd.message}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="discount-china">Discount (USD, optional)</Label>
-                <NumberInput
-                  id="discount-china"
-                  min={0}
-                  step="0.01"
-                  {...form.register('discountUsd', numberRegisterOptions())}
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fob-price">FOB price (USD)</Label>
+              <NumberInput
+                id="fob-price"
+                min={0}
+                step="0.01"
+                {...form.register('fobPriceUsd', numberRegisterOptions())}
+              />
+              {form.formState.errors.fobPriceUsd ? (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.fobPriceUsd.message}
+                </p>
+              ) : null}
             </div>
           )}
 

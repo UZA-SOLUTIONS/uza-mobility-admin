@@ -58,6 +58,17 @@ export type AdminListingPricing = {
   currency: string;
   basePriceUsd?: number | null;
   fobPriceUsd?: number | null;
+  sellerDesiredPayoutUsd?: number | null;
+  shippingCostUsd?: number | null;
+  localChargesUsd?: number | null;
+  taxesEstimateUsd?: number | null;
+  insuranceUsd?: number | null;
+  storageUsd?: number | null;
+  clearingFeeUsd?: number | null;
+  landingCostUsd?: number | null;
+  marginUsd?: number | null;
+  commissionUsd?: number | null;
+  ruleDiscountUsd?: number | null;
   discountUsd?: number | null;
   priceNotes?: string | null;
 };

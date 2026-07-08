@@ -1,3 +1,4 @@
+import { siteConfig } from '@/config/site';
 import {
   authenticatedFetch,
   authenticatedPaginatedFetch,
@@ -9,6 +10,11 @@ import type {
   AdminUser,
   PricingRule,
 } from '@/types/admin/platform';
+import type {
+  DiscountSalesFilters,
+  DiscountSalesMeta,
+  DiscountSaleRow,
+} from '@/types/admin/discount-sales';
 import type {
   AssignUserRolesInput,
   CreatePricingRuleInput,
@@ -83,4 +89,29 @@ export function deactivatePricingRule(id: string) {
   return authenticatedFetch<PricingRule>(`/admin/pricing-rules/${id}`, {
     method: 'DELETE',
   });
+}
+
+export function getDiscountSalesReport(filters: DiscountSalesFilters = {}) {
+  return authenticatedPaginatedFetch<DiscountSaleRow, DiscountSalesMeta>(
+    '/admin/reports/discount-sales',
+    {
+      searchParams: toSearchParams(filters),
+    },
+  );
+}
+
+export async function downloadDiscountSalesPdf(
+  accessToken: string,
+  filters: DiscountSalesFilters = {},
+): Promise<Blob> {
+  const params = toSearchParams(filters);
+  const qs = params.toString();
+  const url = `${siteConfig.apiUrl}/admin/reports/discount-sales/export${qs ? `?${qs}` : ''}`;
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new Error('Could not export discount sales report');
+  }
+  return response.blob();
 }

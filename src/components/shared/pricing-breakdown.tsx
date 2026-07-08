@@ -7,8 +7,21 @@ function formatUsd(value: number | undefined) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(value);
+}
+
+function formatAmountWithPercent(
+  amount: number | undefined,
+  ratePercent?: number,
+): string {
+  const formatted = formatUsd(amount);
+  if (ratePercent != null && ratePercent > 0) {
+    const displayRate =
+      ratePercent % 1 === 0 ? ratePercent.toFixed(0) : ratePercent.toFixed(2);
+    return `${formatted} (${displayRate}%)`;
+  }
+  return formatted;
 }
 
 function Line({
@@ -52,6 +65,30 @@ export function PricingBreakdown({
   }
 
   const type = sellerType ?? breakdown.sellerType;
+  const showDiscount =
+    (breakdown.ruleDiscountUsd ?? 0) > 0 ||
+    breakdown.ruleDiscountRatePercent != null;
+
+  const discountLine = showDiscount ? (
+    <Line
+      label="Discount"
+      value={formatAmountWithPercent(
+        breakdown.ruleDiscountUsd,
+        breakdown.ruleDiscountRatePercent,
+      )}
+    />
+  ) : null;
+
+  const marginLine =
+    breakdown.marginUsd != null ? (
+      <Line
+        label="Platform margin"
+        value={formatAmountWithPercent(
+          breakdown.marginUsd,
+          breakdown.platformMarginRatePercent,
+        )}
+      />
+    ) : null;
 
   return (
     <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
@@ -61,7 +98,7 @@ export function PricingBreakdown({
       {type === 'UZA_RWANDA_STOCK' ? (
         <>
           <Line label="Base price" value={formatUsd(breakdown.basePriceUsd)} />
-          <Line label="Discount" value={formatUsd(breakdown.discountUsd)} />
+          {discountLine}
           <Line
             label="Buyer pays (list price)"
             value={formatUsd(breakdown.finalPriceUsd)}
@@ -93,11 +130,45 @@ export function PricingBreakdown({
             label="Landing cost"
             value={formatUsd(breakdown.landingCostUsd)}
           />
+          {marginLine}
+          {discountLine}
           <Line
-            label="Platform margin"
-            value={formatUsd(breakdown.marginUsd)}
+            label="Buyer pays (list price)"
+            value={formatUsd(breakdown.finalPriceUsd)}
+            emphasis
           />
-          <Line label="Discount" value={formatUsd(breakdown.discountUsd)} />
+        </>
+      ) : type === 'LOCAL_SELLER' ? (
+        <>
+          <Line
+            label="Seller payout"
+            value={formatUsd(breakdown.sellerDesiredPayoutUsd)}
+          />
+          <Line
+            label="Platform commission"
+            value={formatUsd(breakdown.commissionUsd)}
+          />
+          {discountLine}
+          <Line
+            label="Buyer pays (list price)"
+            value={formatUsd(breakdown.finalPriceUsd)}
+            emphasis
+          />
+        </>
+      ) : type === 'INTERNATIONAL_SELLER' ? (
+        <>
+          <Line label="FOB price" value={formatUsd(breakdown.fobPriceUsd)} />
+          <Line label="Shipping" value={formatUsd(breakdown.shippingCostUsd)} />
+          <Line
+            label="Local charges"
+            value={formatUsd(breakdown.localChargesUsd)}
+          />
+          <Line
+            label="Taxes (est.)"
+            value={formatUsd(breakdown.taxesEstimateUsd)}
+          />
+          {marginLine}
+          {discountLine}
           <Line
             label="Buyer pays (list price)"
             value={formatUsd(breakdown.finalPriceUsd)}

@@ -60,10 +60,13 @@ export async function apiFetch<T>(
   return body.data;
 }
 
-export async function apiFetchPaginated<T>(
+export async function apiFetchPaginated<
+  T,
+  TMeta extends PaginationMeta = PaginationMeta,
+>(
   path: string,
   options: ApiRequestOptions = {},
-): Promise<PaginatedResult<T>> {
+): Promise<PaginatedResult<T, TMeta>> {
   const { token, headers, searchParams, ...init } = options;
   const url = buildUrl(path, searchParams);
 
@@ -77,9 +80,9 @@ export async function apiFetchPaginated<T>(
   });
 
   const raw = await response.text();
-  let body: ApiResponse<T[]> & { meta?: PaginationMeta };
+  let body: ApiResponse<T[]> & { meta?: TMeta };
   try {
-    body = JSON.parse(raw) as ApiResponse<T[]> & { meta?: PaginationMeta };
+    body = JSON.parse(raw) as ApiResponse<T[]> & { meta?: TMeta };
   } catch {
     if (raw.trimStart().startsWith('<')) {
       throw new ApiClientError(
@@ -104,11 +107,11 @@ export async function apiFetchPaginated<T>(
 
   return {
     items: body.data,
-    meta: body.meta ?? {
+    meta: (body.meta ?? {
       total: body.data.length,
       page: 1,
       limit: body.data.length,
       totalPages: 1,
-    },
+    }) as TMeta,
   };
 }

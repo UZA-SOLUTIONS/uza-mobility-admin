@@ -107,11 +107,20 @@ export function AdminPricingRulesPanel() {
                       .join(' → ') || 'Any route'}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {rule.platformMarginPercent != null
-                      ? `${rule.platformMarginPercent}% margin`
-                      : rule.commissionRate != null
+                    {[
+                      rule.platformMarginPercent != null
+                        ? `${rule.platformMarginPercent}% margin`
+                        : null,
+                      rule.commissionRate != null
                         ? `${(rule.commissionRate * 100).toFixed(1)}% commission`
-                        : '—'}
+                        : null,
+                      rule.discountRatePercent != null &&
+                      rule.discountRatePercent > 0
+                        ? `${rule.discountRatePercent}% discount`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ') || '—'}
                   </TableCell>
                   <TableCell>
                     <StatusBadge

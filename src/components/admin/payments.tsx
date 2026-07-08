@@ -96,6 +96,7 @@ export function AdminPaymentsPanel() {
           <TableHeader>
             <TableRow>
               <TableHead>Invoice</TableHead>
+              <TableHead>Buyer</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Sender</TableHead>
               <TableHead>Proofs</TableHead>
@@ -108,7 +109,7 @@ export function AdminPaymentsPanel() {
             {isLoading
               ? Array.from({ length: 5 }).map((_, index) => (
                   <TableRow key={index}>
-                    {Array.from({ length: 7 }).map((__, cell) => (
+                    {Array.from({ length: 8 }).map((__, cell) => (
                       <TableCell key={cell}>
                         <Skeleton className="h-5 w-full" />
                       </TableCell>
@@ -119,7 +120,7 @@ export function AdminPaymentsPanel() {
             {!isLoading && data?.items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No payments match these filters.
@@ -136,6 +137,16 @@ export function AdminPaymentsPanel() {
                       <div className="text-xs text-muted-foreground">
                         {payment.invoice.paymentReference}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">
+                        {payment.invoice.buyerName}
+                      </div>
+                      {payment.invoice.buyerEmail ? (
+                        <div className="text-xs text-muted-foreground">
+                          {payment.invoice.buyerEmail}
+                        </div>
+                      ) : null}
                     </TableCell>
                     <TableCell>{formatUsd(payment.amountPaid)}</TableCell>
                     <TableCell className="text-sm">

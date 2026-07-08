@@ -106,6 +106,19 @@ export function PaymentDetailSheet({
 
                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Buyer</dt>
+                    <dd>
+                      <div className="font-medium">
+                        {payment.invoice.buyerName}
+                      </div>
+                      {payment.invoice.buyerEmail ? (
+                        <div className="text-xs text-muted-foreground">
+                          {payment.invoice.buyerEmail}
+                        </div>
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Amount paid</dt>
                     <dd className="font-medium">
                       {formatUsd(payment.amountPaid)} {payment.currency}
@@ -141,7 +154,7 @@ export function PaymentDetailSheet({
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Verified by</dt>
-                    <dd>{payment.verifiedBy ?? '—'}</dd>
+                    <dd>{payment.verifiedByName ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Verified at</dt>

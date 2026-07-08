@@ -13,7 +13,8 @@ import {
   formatUsd,
 } from '@/components/admin/shared/detail-fields';
 import { canAdminEditOwnListing } from '@/lib/admin/listing-form';
-import { parseListingPricingRuleId } from '@/lib/admin/listing-pricing';
+import { listingPricingToBreakdown } from '@/lib/admin/listing-pricing';
+import { PricingBreakdown } from '@/components/shared/pricing-breakdown';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
@@ -52,7 +53,10 @@ export function ListingDetailSheet({
   if (!listing) return null;
 
   const pricing = listing.listingPricing;
-  const pricingRuleId = parseListingPricingRuleId(pricing?.priceNotes);
+  const pricingBreakdown = listingPricingToBreakdown(
+    pricing,
+    listing.sellerType,
+  );
   const ev = listing.evSpecs;
   const verification = listing.verificationReport;
 
@@ -271,32 +275,22 @@ export function ListingDetailSheet({
             </DetailSection>
           ) : null}
 
-          <DetailSection title="Pricing">
-            <DetailRow
-              label="List price"
-              value={formatUsd(pricing?.finalPriceUsd)}
-            />
-            {pricing?.basePriceUsd != null ? (
-              <DetailRow
-                label="Base price"
-                value={formatUsd(pricing.basePriceUsd)}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold">Pricing</h3>
+            {pricingBreakdown ? (
+              <PricingBreakdown
+                breakdown={pricingBreakdown}
+                sellerType={listing.sellerType}
               />
-            ) : null}
-            {pricing?.fobPriceUsd != null ? (
-              <DetailRow
-                label="FOB price"
-                value={formatUsd(pricing.fobPriceUsd)}
-              />
-            ) : null}
-            {pricing?.discountUsd != null && pricing.discountUsd > 0 ? (
-              <DetailRow
-                label="Discount"
-                value={formatUsd(pricing.discountUsd)}
-              />
-            ) : null}
-            <DetailRow label="Currency" value={pricing?.currency ?? 'USD'} />
-            <DetailRow label="Pricing rule ID" value={pricingRuleId} />
-          </DetailSection>
+            ) : (
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <DetailRow
+                  label="List price"
+                  value={formatUsd(pricing?.finalPriceUsd)}
+                />
+              </dl>
+            )}
+          </div>
 
           <DetailSection title="Seller & creator">
             <DetailRow label="Seller" value={listing.seller.businessName} />

@@ -67,6 +67,7 @@ export type AdminPayment = {
   notes: string | null;
   status: PaymentStatus;
   verifiedBy: string | null;
+  verifiedByName: string | null;
   verifiedAt: string | null;
   rejectionReason: string | null;
   bankStatementRef: string | null;
@@ -77,6 +78,8 @@ export type AdminPayment = {
     paymentReference: string;
     totalAmountUsd: number;
     status: InvoiceStatus;
+    buyerName: string;
+    buyerEmail: string | null;
   };
   proofs: PaymentProof[];
 };

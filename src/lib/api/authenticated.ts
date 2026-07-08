@@ -6,7 +6,7 @@ import type { AppSession } from '@/types/auth/session';
 import { apiFetch, apiFetchPaginated } from './api';
 import { ApiClientError } from './error';
 import type { ApiRequestOptions } from './types';
-import type { PaginatedResult } from '@/types/api/pagination';
+import type { PaginatedResult, PaginationMeta } from '@/types/api/pagination';
 
 type AuthenticatedOptions = ApiRequestOptions & {
   /** Internal: prevent infinite retry loops. */
@@ -93,10 +93,13 @@ export async function authenticatedFetch<T>(
   }
 }
 
-export async function authenticatedPaginatedFetch<T>(
+export async function authenticatedPaginatedFetch<
+  T,
+  TMeta extends PaginationMeta = PaginationMeta,
+>(
   path: string,
   options: AuthenticatedOptions = {},
-): Promise<PaginatedResult<T>> {
+): Promise<PaginatedResult<T, TMeta>> {
   const { _retried, token: explicitToken, ...rest } = options;
   let session = await resolveSession(explicitToken);
   const token = explicitToken ?? session?.accessToken ?? null;
@@ -110,7 +113,7 @@ export async function authenticatedPaginatedFetch<T>(
   }
 
   try {
-    return await apiFetchPaginated<T>(path, { ...rest, token });
+    return await apiFetchPaginated<T, TMeta>(path, { ...rest, token });
   } catch (error) {
     if (!session) {
       session = (await getSession()) as AppSession | null;
@@ -138,7 +141,7 @@ export async function authenticatedPaginatedFetch<T>(
       throw error;
     }
 
-    return authenticatedPaginatedFetch<T>(path, {
+    return authenticatedPaginatedFetch<T, TMeta>(path, {
       ...rest,
       token: nextToken,
       _retried: true,
