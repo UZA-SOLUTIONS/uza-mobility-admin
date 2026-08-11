@@ -25,13 +25,7 @@ import {
 import { useAdminParts, useDeletePart } from '@/queries/admin';
 import type { AdminPart, AdminPartsFilters } from '@/types/admin/marketplace';
 
-function formatUsd(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatUsd } from '@/lib/admin/format';
 
 export function AdminPartsPanel() {
   const [filters, setFilters] = useState<AdminPartsFilters>({

@@ -7,6 +7,7 @@ import {
   approveAdminOperator,
   approveAdminStation,
   approveListing,
+  advanceListingInventoryStage,
   approvePart,
   createAdminListing,
   createPart,
@@ -65,6 +66,7 @@ import type {
   StationReviewActionInput,
 } from '@/types/admin/stations';
 import type {
+  AdminListing,
   AdminListingsFilters,
   AdminPartsFilters,
   AdminSellersFilters,
@@ -210,6 +212,25 @@ export function usePublishListing() {
     mutationFn: publishListing,
     onSuccess: () => {
       toast.success('Listing published');
+      invalidateListingQueries(queryClient);
+    },
+    onError: (error) => toast.error(mutationError(error)),
+  });
+}
+
+export function useAdvanceListingInventoryStage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      stage,
+    }: {
+      id: string;
+      stage: NonNullable<AdminListing['inventoryStage']>;
+    }) => advanceListingInventoryStage(id, stage),
+    onSuccess: () => {
+      toast.success('Inventory stage updated');
       invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),

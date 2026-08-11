@@ -75,8 +75,20 @@ export function ListingDetailSheet({
         <div className="space-y-6 px-6 py-6">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={listing.status} />
+            <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
+              {
+                (
+                  {
+                    CHINA_UNPAID: 'China',
+                    IN_TRANSIT: 'In transit',
+                    AT_PORT: 'At port',
+                    KIGALI_STOCK: 'Kigali stock',
+                  } as const
+                )[listing.inventoryStage ?? 'KIGALI_STOCK']
+              }
+            </span>
             <span className="text-xs text-muted-foreground">
-              {formatSellerChannel(listing.sellerType)}
+              Channel: {formatSellerChannel(listing.sellerType)}
             </span>
             {listing.isFeatured ? (
               <span className="rounded bg-muted px-2 py-0.5 text-xs">

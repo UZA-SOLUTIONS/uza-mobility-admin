@@ -1,15 +1,7 @@
 'use client';
 
+import { formatUsd } from '@/lib/admin/format';
 import type { PriceBreakdown } from '@/types/pricing';
-
-function formatUsd(value: number | undefined) {
-  if (value == null || !Number.isFinite(value)) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 function formatAmountWithPercent(
   amount: number | undefined,
@@ -38,7 +30,7 @@ function Line({
       className={`flex justify-between gap-4 text-sm ${emphasis ? 'font-medium' : ''}`}
     >
       <span className="text-muted-foreground">{label}</span>
-      <span>{value}</span>
+      <span className="text-right">{value}</span>
     </div>
   );
 }
@@ -90,6 +82,14 @@ export function PricingBreakdown({
       />
     ) : null;
 
+  const listPriceLine = (
+    <Line
+      label="Buyer pays (list price)"
+      value={formatUsd(breakdown.finalPriceUsd)}
+      emphasis
+    />
+  );
+
   return (
     <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
       <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -99,11 +99,7 @@ export function PricingBreakdown({
         <>
           <Line label="Base price" value={formatUsd(breakdown.basePriceUsd)} />
           {discountLine}
-          <Line
-            label="Buyer pays (list price)"
-            value={formatUsd(breakdown.finalPriceUsd)}
-            emphasis
-          />
+          {listPriceLine}
         </>
       ) : type === 'UZA_CHINA_SOURCING' ? (
         <>
@@ -132,11 +128,7 @@ export function PricingBreakdown({
           />
           {marginLine}
           {discountLine}
-          <Line
-            label="Buyer pays (list price)"
-            value={formatUsd(breakdown.finalPriceUsd)}
-            emphasis
-          />
+          {listPriceLine}
         </>
       ) : type === 'LOCAL_SELLER' ? (
         <>
@@ -149,11 +141,7 @@ export function PricingBreakdown({
             value={formatUsd(breakdown.commissionUsd)}
           />
           {discountLine}
-          <Line
-            label="Buyer pays (list price)"
-            value={formatUsd(breakdown.finalPriceUsd)}
-            emphasis
-          />
+          {listPriceLine}
         </>
       ) : type === 'INTERNATIONAL_SELLER' ? (
         <>
@@ -169,18 +157,10 @@ export function PricingBreakdown({
           />
           {marginLine}
           {discountLine}
-          <Line
-            label="Buyer pays (list price)"
-            value={formatUsd(breakdown.finalPriceUsd)}
-            emphasis
-          />
+          {listPriceLine}
         </>
       ) : (
-        <Line
-          label="Buyer pays (list price)"
-          value={formatUsd(breakdown.finalPriceUsd)}
-          emphasis
-        />
+        listPriceLine
       )}
     </div>
   );

@@ -139,6 +139,10 @@ export type AdminListing = {
   country: string;
   deliveryEstimateDays?: number | null;
   sellerType: SellerType;
+  inventoryStage?: 'CHINA_UNPAID' | 'IN_TRANSIT' | 'AT_PORT' | 'KIGALI_STOCK';
+  inventoryPaidAt?: string | null;
+  portArrivedAt?: string | null;
+  kigaliArrivedAt?: string | null;
   verificationLevel: VerificationLevel;
   isFeatured: boolean;
   isHotDeal: boolean;
@@ -181,6 +185,7 @@ export type AdminListingsFilters = {
   status?: ListingStatus;
   sellerId?: string;
   sellerType?: AdminListingChannelType;
+  inventoryStage?: 'CHINA_UNPAID' | 'IN_TRANSIT' | 'AT_PORT' | 'KIGALI_STOCK';
   q?: string;
   page?: number;
   limit?: number;

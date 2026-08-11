@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDateTime, formatUsd } from '@/lib/admin/format';
+import { formatDateTime, formatSettledAmount } from '@/lib/admin/format';
 import { useAdminPayments } from '@/queries/commerce';
 import {
   paymentStatuses,
@@ -148,7 +148,15 @@ export function AdminPaymentsPanel() {
                         </div>
                       ) : null}
                     </TableCell>
-                    <TableCell>{formatUsd(payment.amountPaid)}</TableCell>
+                    <TableCell>
+                      {formatSettledAmount(
+                        payment.amountPaid,
+                        payment.currency,
+                      )}
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {payment.currency === 'RWF' ? 'Rwf' : 'USD'}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-sm">
                       {payment.senderName ?? '—'}
                     </TableCell>

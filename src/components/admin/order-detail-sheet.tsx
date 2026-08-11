@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -31,9 +32,16 @@ import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import {
   useAdminOrder,
   useAdvanceOrder,
+  useAssignOrderFulfillment,
   useCancelOrder,
+  useNotifyOrderPortArrival,
 } from '@/queries/commerce';
 import { advanceOrderSchema, type AdvanceOrderInput } from '@/schemas/commerce';
+import {
+  formatOrderStage,
+  getNextOrderStatus,
+  getOrderPipeline,
+} from '@/lib/admin/order-stages';
 
 type OrderDetailSheetProps = {
   orderId: string | null;
@@ -55,25 +63,61 @@ export function OrderDetailSheet({
   } = useAdminOrder(open ? orderId : null);
   const advance = useAdvanceOrder();
   const cancel = useCancelOrder();
+  const assignFulfillment = useAssignOrderFulfillment();
+  const notifyPort = useNotifyOrderPortArrival();
   const [advanceOpen, setAdvanceOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [fulfillOpen, setFulfillOpen] = useState(false);
+  const [vin, setVin] = useState('');
+  const [containerNumber, setContainerNumber] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [vesselName, setVesselName] = useState('');
+  const [voyageNumber, setVoyageNumber] = useState('');
+  const [etaAt, setEtaAt] = useState('');
+  const [portOfDischarge, setPortOfDischarge] = useState('');
+  const [terminalOfPickup, setTerminalOfPickup] = useState('');
+  const [arrivalNotice, setArrivalNotice] = useState<File | null>(null);
 
   const form = useForm<AdvanceOrderInput>({
     resolver: zodResolver(advanceOrderSchema),
     defaultValues: { description: '', location: '' },
   });
 
-  const busy = advance.isPending || cancel.isPending;
+  const busy =
+    advance.isPending ||
+    cancel.isPending ||
+    assignFulfillment.isPending ||
+    notifyPort.isPending;
   const canAdvance =
     order &&
     order.status !== 'DELIVERED' &&
     order.status !== 'CANCELLED' &&
     can('orders:update-status');
+  const canFulfill = order && can('orders:update-status');
+  const nextStatus = order
+    ? getNextOrderStatus(order.sellerType, order.status)
+    : null;
+  const pipeline = order ? getOrderPipeline(order.sellerType) : [];
+  const currentStageIndex = order ? pipeline.indexOf(order.status) : -1;
 
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className={adminDetailSheetClassName}>
+          <SheetHeader
+            className={order && !isLoading ? 'border-b px-6 py-5' : 'sr-only'}
+          >
+            <SheetTitle className="text-xl">
+              {order?.orderNumber ?? 'Order details'}
+            </SheetTitle>
+            {order && !isLoading ? (
+              <SheetDescription>
+                {order.listing.listingTitle} ·{' '}
+                {formatSellerChannel(order.sellerType)}
+              </SheetDescription>
+            ) : null}
+          </SheetHeader>
+
           {isLoading ? (
             <div className="space-y-4 px-6 py-6">
               <Skeleton className="h-8 w-2/3" />
@@ -89,16 +133,48 @@ export function OrderDetailSheet({
 
           {order && !isLoading ? (
             <>
-              <SheetHeader className="border-b px-6 py-5">
-                <SheetTitle className="text-xl">{order.orderNumber}</SheetTitle>
-                <SheetDescription>
-                  {order.listing.listingTitle} ·{' '}
-                  {formatSellerChannel(order.sellerType)}
-                </SheetDescription>
-              </SheetHeader>
-
               <div className="space-y-6 px-6 py-6">
-                <StatusBadge status={order.status} />
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={order.status} />
+                    {nextStatus ? (
+                      <p className="text-sm text-muted-foreground">
+                        Next:{' '}
+                        <span className="font-medium text-foreground">
+                          {formatOrderStage(nextStatus)}
+                        </span>
+                      </p>
+                    ) : order.status !== 'CANCELLED' ? (
+                      <p className="text-sm text-muted-foreground">
+                        Final stage reached
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {pipeline.length > 0 && order.status !== 'CANCELLED' ? (
+                    <ol className="flex flex-wrap gap-1.5">
+                      {pipeline.map((stage, index) => {
+                        const isCurrent = stage === order.status;
+                        const isDone =
+                          currentStageIndex >= 0 && index < currentStageIndex;
+                        return (
+                          <li
+                            key={stage}
+                            className={
+                              isCurrent
+                                ? 'rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground'
+                                : isDone
+                                  ? 'rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground line-through'
+                                  : 'rounded-md border px-2 py-1 text-xs text-muted-foreground'
+                            }
+                          >
+                            {formatOrderStage(stage)}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  ) : null}
+                </div>
 
                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
@@ -139,6 +215,40 @@ export function OrderDetailSheet({
                   <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Delivery address</dt>
                     <dd>{order.deliveryAddress ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">VIN / chassis</dt>
+                    <dd className="font-mono text-xs">{order.vin ?? '—'}</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Container</dt>
+                    <dd className="font-mono text-xs">
+                      {order.shipment?.containerNumber ?? '—'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Vessel / voyage</dt>
+                    <dd>
+                      {[
+                        order.shipment?.vesselName,
+                        order.shipment?.voyageNumber,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">ETA / port</dt>
+                    <dd>
+                      {[
+                        order.shipment?.etaAt
+                          ? formatDate(order.shipment.etaAt)
+                          : null,
+                        order.shipment?.portOfDischarge,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Est. delivery</dt>
@@ -196,13 +306,56 @@ export function OrderDetailSheet({
                 </div>
 
                 <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/30 p-4">
+                  {canFulfill ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => {
+                        setVin(order.vin ?? '');
+                        setContainerNumber(
+                          order.shipment?.containerNumber ?? '',
+                        );
+                        setDocumentNumber(order.shipment?.documentNumber ?? '');
+                        setVesselName(order.shipment?.vesselName ?? '');
+                        setVoyageNumber(order.shipment?.voyageNumber ?? '');
+                        setEtaAt(
+                          order.shipment?.etaAt
+                            ? order.shipment.etaAt.slice(0, 10)
+                            : '',
+                        );
+                        setPortOfDischarge(
+                          order.shipment?.portOfDischarge ?? '',
+                        );
+                        setTerminalOfPickup(
+                          order.shipment?.terminalOfPickup ?? '',
+                        );
+                        setArrivalNotice(null);
+                        setFulfillOpen(true);
+                      }}
+                    >
+                      Assign VIN / shipment
+                    </Button>
+                  ) : null}
+                  {canFulfill && order.shipment ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => notifyPort.mutate(order.id)}
+                    >
+                      Notify port arrival
+                    </Button>
+                  ) : null}
                   {canAdvance ? (
                     <Button
                       size="sm"
-                      disabled={busy}
+                      disabled={busy || !nextStatus}
                       onClick={() => setAdvanceOpen(true)}
                     >
-                      Advance status
+                      {nextStatus
+                        ? `Advance to ${formatOrderStage(nextStatus)}`
+                        : 'Advance status'}
                     </Button>
                   ) : null}
                   {isSuperAdmin && order.status !== 'CANCELLED' ? (
@@ -227,6 +380,19 @@ export function OrderDetailSheet({
           <DialogHeader>
             <DialogTitle>Advance order</DialogTitle>
           </DialogHeader>
+          {order && nextStatus ? (
+            <div className="rounded-lg border bg-muted/40 px-3 py-3 text-sm">
+              <p className="text-muted-foreground">Status change</p>
+              <p className="mt-1 font-medium">
+                {formatOrderStage(order.status)}
+                <span className="mx-2 text-muted-foreground">→</span>
+                {formatOrderStage(nextStatus)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pipeline: {formatSellerChannel(order.sellerType)}
+              </p>
+            </div>
+          ) : null}
           <form
             onSubmit={form.handleSubmit((values) => {
               if (!order) return;
@@ -262,8 +428,145 @@ export function OrderDetailSheet({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={busy}>
-                Advance
+              <Button type="submit" disabled={busy || !nextStatus}>
+                {nextStatus
+                  ? `Advance to ${formatOrderStage(nextStatus)}`
+                  : 'Advance'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={fulfillOpen} onOpenChange={setFulfillOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Assign VIN & arrival notice</DialogTitle>
+          </DialogHeader>
+          <form
+            className="space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!order) return;
+              const trimmedVin = vin.trim();
+              if (trimmedVin.length < 5) {
+                toast.error('VIN must be at least 5 characters');
+                return;
+              }
+              assignFulfillment.mutate(
+                {
+                  id: order.id,
+                  body: {
+                    vin: trimmedVin,
+                    shipment: {
+                      documentNumber: documentNumber.trim() || undefined,
+                      vesselName: vesselName.trim() || undefined,
+                      voyageNumber: voyageNumber.trim() || undefined,
+                      etaAt: etaAt || undefined,
+                      portOfDischarge: portOfDischarge.trim() || undefined,
+                      terminalOfPickup: terminalOfPickup.trim() || undefined,
+                      containerNumber: containerNumber.trim() || undefined,
+                    },
+                  },
+                  arrivalNotice,
+                },
+                {
+                  onSuccess: () => setFulfillOpen(false),
+                },
+              );
+            }}
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-vin">VIN / chassis</Label>
+              <Input
+                id="fulfill-vin"
+                value={vin}
+                onChange={(e) => setVin(e.target.value)}
+                minLength={5}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                At least 5 characters (full VIN preferred).
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-container">Container number</Label>
+              <Input
+                id="fulfill-container"
+                value={containerNumber}
+                onChange={(e) => setContainerNumber(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-doc">Document / BL number</Label>
+              <Input
+                id="fulfill-doc"
+                value={documentNumber}
+                onChange={(e) => setDocumentNumber(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="fulfill-vessel">Vessel</Label>
+                <Input
+                  id="fulfill-vessel"
+                  value={vesselName}
+                  onChange={(e) => setVesselName(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="fulfill-voyage">Voyage</Label>
+                <Input
+                  id="fulfill-voyage"
+                  value={voyageNumber}
+                  onChange={(e) => setVoyageNumber(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-eta">ETA</Label>
+              <Input
+                id="fulfill-eta"
+                type="date"
+                value={etaAt}
+                onChange={(e) => setEtaAt(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-port">Port of discharge</Label>
+              <Input
+                id="fulfill-port"
+                value={portOfDischarge}
+                onChange={(e) => setPortOfDischarge(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-terminal">Terminal / depot</Label>
+              <Input
+                id="fulfill-terminal"
+                value={terminalOfPickup}
+                onChange={(e) => setTerminalOfPickup(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="fulfill-pdf">Arrival notice PDF (optional)</Label>
+              <Input
+                id="fulfill-pdf"
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={(e) => setArrivalNotice(e.target.files?.[0] ?? null)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setFulfillOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={busy || !vin.trim()}>
+                Save fulfillment
               </Button>
             </DialogFooter>
           </form>

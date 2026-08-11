@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ApiClientError } from '@/lib/api';
+import { formatOrderStage } from '@/lib/admin/order-stages';
 import {
   invalidateCommerceFinancing,
   invalidateCommerceFleetInvoice,
@@ -13,6 +14,7 @@ import {
 import {
   advanceOrder,
   assignFinancingBank,
+  assignOrderFulfillment,
   cancelInvoice,
   cancelOrder,
   confirmPayment,
@@ -28,8 +30,10 @@ import {
   getAdminOrders,
   getAdminPayments,
   markPartialPayment,
+  notifyOrderPortArrival,
   recordFinancingOutcome,
   rejectPayment,
+  type AssignOrderFulfillmentInput,
 } from '@/lib/api/commerce';
 import type { AdminListing } from '@/types/admin/marketplace';
 import type {
@@ -211,8 +215,11 @@ export function useAdvanceOrder() {
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: AdvanceOrderInput }) =>
       advanceOrder(id, body),
-    onSuccess: () => {
-      toast.success('Order advanced to next stage');
+    onSuccess: (result) => {
+      const next = result.status
+        ? formatOrderStage(result.status)
+        : 'next stage';
+      toast.success(`Order advanced to ${next}`);
       invalidateCommerceOrders(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
@@ -225,6 +232,38 @@ export function useCancelOrder() {
     mutationFn: cancelOrder,
     onSuccess: () => {
       toast.success('Order cancelled');
+      invalidateCommerceOrders(queryClient);
+    },
+    onError: (error) => toast.error(mutationError(error)),
+  });
+}
+
+export function useAssignOrderFulfillment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+      arrivalNotice,
+    }: {
+      id: string;
+      body: AssignOrderFulfillmentInput;
+      arrivalNotice?: File | null;
+    }) => assignOrderFulfillment(id, body, arrivalNotice),
+    onSuccess: () => {
+      toast.success('VIN and shipment assigned');
+      invalidateCommerceOrders(queryClient);
+    },
+    onError: (error) => toast.error(mutationError(error)),
+  });
+}
+
+export function useNotifyOrderPortArrival() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: notifyOrderPortArrival,
+    onSuccess: () => {
+      toast.success('Buyer notified of port arrival by email');
       invalidateCommerceOrders(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),

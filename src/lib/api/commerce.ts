@@ -5,10 +5,14 @@ import {
   authenticatedPaginatedFetch,
 } from '@/lib/api/authenticated';
 import {
-  downloadInvoiceDocumentHtml,
+  authenticatedMultipartFetch,
+  buildMultipartFormData,
+} from '@/lib/api/multipart';
+import {
+  downloadInvoiceDocumentPdf,
   fetchAuthenticatedInvoiceDocument,
   invoiceDocumentFilename,
-  openInvoiceDocumentInNewTab,
+  openInvoiceDocumentPdf,
 } from '@/lib/api/invoice-document';
 import { toSearchParams } from '@/lib/api/query-params';
 import type { AdminListing } from '@/types/admin/marketplace';
@@ -71,7 +75,7 @@ export function getAdminInvoice(id: string) {
   return authenticatedFetch<AdminInvoice>(`/admin/invoices/${id}`);
 }
 
-async function fetchAdminInvoiceDocumentHtml(id: string) {
+async function fetchAdminInvoiceDocument(id: string) {
   const session = await getSession();
   const token = session?.accessToken;
   if (!token) {
@@ -85,16 +89,16 @@ async function fetchAdminInvoiceDocumentHtml(id: string) {
 }
 
 export async function openAdminInvoiceDocument(id: string) {
-  const html = await fetchAdminInvoiceDocumentHtml(id);
-  openInvoiceDocumentInNewTab(html);
+  const blob = await fetchAdminInvoiceDocument(id);
+  openInvoiceDocumentPdf(blob);
 }
 
 export async function downloadAdminInvoiceDocument(
   id: string,
   invoiceNumber: string,
 ) {
-  const html = await fetchAdminInvoiceDocumentHtml(id);
-  downloadInvoiceDocumentHtml(html, invoiceDocumentFilename(invoiceNumber));
+  const blob = await fetchAdminInvoiceDocument(id);
+  downloadInvoiceDocumentPdf(blob, invoiceDocumentFilename(invoiceNumber));
 }
 
 export function cancelInvoice(id: string) {
@@ -165,6 +169,49 @@ export function advanceOrder(id: string, body: AdvanceOrderInput = {}) {
 export function cancelOrder(id: string) {
   return authenticatedFetch<AdminOrder>(`/admin/orders/${id}/cancel`, {
     method: 'PATCH',
+  });
+}
+
+export type AssignOrderFulfillmentInput = {
+  vin: string;
+  shipment?: {
+    documentNumber?: string;
+    vesselName?: string;
+    voyageNumber?: string;
+    etaAt?: string;
+    portOfLoading?: string;
+    portOfDischarge?: string;
+    terminalOfPickup?: string;
+    containerNumber?: string;
+    sealNumber?: string;
+    carrierTrackUrl?: string;
+    notes?: string;
+  };
+};
+
+export function assignOrderFulfillment(
+  id: string,
+  body: AssignOrderFulfillmentInput,
+  arrivalNotice?: File | null,
+) {
+  const form = buildMultipartFormData(
+    body,
+    arrivalNotice ? [{ field: 'arrivalNotice', files: [arrivalNotice] }] : [],
+  );
+  return authenticatedMultipartFetch<AdminOrder>(
+    `/admin/orders/${id}/fulfillment`,
+    form,
+    { method: 'PATCH' },
+  );
+}
+
+export function notifyOrderPortArrival(id: string) {
+  return authenticatedFetch<{
+    order: AdminOrder;
+    buyerEmail: string | null;
+    message: string;
+  }>(`/admin/orders/${id}/notify-port-arrival`, {
+    method: 'POST',
   });
 }
 

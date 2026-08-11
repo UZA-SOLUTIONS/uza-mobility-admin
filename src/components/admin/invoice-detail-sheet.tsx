@@ -139,7 +139,9 @@ export function InvoiceDetailSheet({
 
                 {invoice.beneficiaryName ||
                 invoice.bankName ||
-                invoice.accountNumber ? (
+                invoice.accountNumber ||
+                invoice.rwfBankName ||
+                invoice.rwfAccountNumber ? (
                   <dl className="grid gap-3 text-sm sm:grid-cols-2">
                     <p className="col-span-full text-sm font-medium">
                       Bank details
@@ -149,15 +151,37 @@ export function InvoiceDetailSheet({
                       <dd>{invoice.beneficiaryName ?? '—'}</dd>
                     </div>
                     <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                      <dt className="text-muted-foreground">Bank</dt>
+                      <dt className="text-muted-foreground">USD bank</dt>
                       <dd>{invoice.bankName ?? '—'}</dd>
                     </div>
                     <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
-                      <dt className="text-muted-foreground">Account number</dt>
+                      <dt className="text-muted-foreground">USD account</dt>
                       <dd className="font-mono text-xs">
                         {invoice.accountNumber ?? '—'}
                       </dd>
                     </div>
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Rwf bank</dt>
+                      <dd>{invoice.rwfBankName ?? '—'}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">Rwf account</dt>
+                      <dd className="font-mono text-xs">
+                        {invoice.rwfAccountNumber ?? '—'}
+                      </dd>
+                    </div>
+                    {invoice.exchangeRateUsed != null ? (
+                      <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
+                        <dt className="text-muted-foreground">Exchange rate</dt>
+                        <dd>
+                          1 USD ≈{' '}
+                          {invoice.exchangeRateUsed.toLocaleString('en-US', {
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          Rwf
+                        </dd>
+                      </div>
+                    ) : null}
                   </dl>
                 ) : null}
 

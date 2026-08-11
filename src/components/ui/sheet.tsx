@@ -67,6 +67,8 @@ function SheetContent({
         )}
         {...props}
       >
+        {/* Fallback when consumers render SheetTitle only after data loads */}
+        <SheetPrimitive.Title className="sr-only">Details</SheetPrimitive.Title>
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close data-slot="sheet-close" asChild>

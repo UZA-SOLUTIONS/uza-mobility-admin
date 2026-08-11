@@ -44,14 +44,7 @@ export function formatDateTime(value: string | null | undefined) {
   return new Date(value).toLocaleString();
 }
 
-export function formatUsd(value: number | null | undefined) {
-  if (value == null) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+export { formatUsd } from '@/lib/admin/format';
 
 const registrationStatusLabels: Record<string, string> = {
   REGISTERED: 'Registered',

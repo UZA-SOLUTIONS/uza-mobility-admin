@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { ApiClientError } from '@/lib/api';
 import {
   getAdminPlatformSettings,
+  getExchangeRate,
+  refreshAdminExchangeRate,
   updateAdminPlatformSettings,
 } from '@/lib/api/platform-settings';
 import { bookingKeys } from '@/queries/bookings';
@@ -13,10 +15,20 @@ import type { UpdatePlatformSettingsInput } from '@/types/admin/platform-setting
 export const platformSettingsKeys = {
   all: ['platform-settings'] as const,
   admin: () => [...platformSettingsKeys.all, 'admin'] as const,
+  exchangeRate: () => [...platformSettingsKeys.all, 'exchange-rate'] as const,
 };
 
 function toastError(error: unknown, fallback: string) {
   toast.error(error instanceof ApiClientError ? error.message : fallback);
+}
+
+export function useExchangeRate(enabled = true) {
+  return useQuery({
+    queryKey: platformSettingsKeys.exchangeRate(),
+    queryFn: getExchangeRate,
+    enabled,
+    staleTime: 60 * 60 * 1000,
+  });
 }
 
 export function useAdminPlatformSettings(enabled = true) {
@@ -41,5 +53,22 @@ export function useUpdatePlatformSettings() {
       toast.success('Platform settings updated');
     },
     onError: (error) => toastError(error, 'Unable to update platform settings'),
+  });
+}
+
+export function useRefreshExchangeRate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: refreshAdminExchangeRate,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: platformSettingsKeys.all,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: platformSettingsKeys.exchangeRate(),
+      });
+      toast.success('Exchange rate refreshed');
+    },
+    onError: (error) => toastError(error, 'Unable to refresh exchange rate'),
   });
 }

@@ -29,7 +29,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import {
+  formatDate,
+  formatDateTime,
+  formatSettledAmount,
+  formatUsd,
+} from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useConfirmPayment,
@@ -119,11 +124,34 @@ export function PaymentDetailSheet({
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Amount paid</dt>
+                    <dt className="text-muted-foreground">Paid to account</dt>
                     <dd className="font-medium">
-                      {formatUsd(payment.amountPaid)} {payment.currency}
+                      {payment.currency === 'RWF' ? 'Rwf' : 'USD'}
                     </dd>
                   </div>
+                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                    <dt className="text-muted-foreground">Amount paid</dt>
+                    <dd className="font-medium">
+                      {formatSettledAmount(
+                        payment.amountPaid,
+                        payment.currency,
+                      )}
+                    </dd>
+                  </div>
+                  {payment.exchangeRateUsed != null ? (
+                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                      <dt className="text-muted-foreground">
+                        Exchange rate used
+                      </dt>
+                      <dd>
+                        1 USD ≈{' '}
+                        {payment.exchangeRateUsed.toLocaleString('en-US', {
+                          maximumFractionDigits: 2,
+                        })}{' '}
+                        Rwf
+                      </dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Invoice total</dt>
                     <dd>{formatUsd(payment.invoice.totalAmountUsd)}</dd>

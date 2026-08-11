@@ -28,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAdminListings } from '@/queries/admin';
+import { formatUsd } from '@/lib/admin/format';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import {
   adminListingChannelTypes,
@@ -36,15 +37,6 @@ import {
   type AdminListingsFilters,
   type ListingStatus,
 } from '@/types/admin/marketplace';
-
-function formatUsd(value: number | null | undefined) {
-  if (value == null) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-GB', {
@@ -202,9 +194,18 @@ export function AdminListingsPanel() {
                     <TableCell>
                       <div>{listing.seller.businessName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {formatSellerChannel(listing.sellerType)}
+                        {
+                          (
+                            {
+                              CHINA_UNPAID: 'China',
+                              IN_TRANSIT: 'In transit',
+                              AT_PORT: 'At port',
+                              KIGALI_STOCK: 'Kigali stock',
+                            } as const
+                          )[listing.inventoryStage ?? 'KIGALI_STOCK']
+                        }
                         {' · '}
-                        {listing.seller.city ?? listing.seller.country}
+                        {formatSellerChannel(listing.sellerType)}
                         {listing.seller.isVerified ? ' · Verified' : ''}
                       </div>
                     </TableCell>

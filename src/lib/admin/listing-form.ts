@@ -118,8 +118,22 @@ export function adminListingToFormValues(
     grossVehicleWeightKg: listing.evSpecs?.grossVehicleWeightKg ?? undefined,
     pricingRuleId:
       parseListingPricingRuleId(listing.listingPricing?.priceNotes) ?? '',
-    basePriceUsd: listing.listingPricing?.basePriceUsd ?? undefined,
-    fobPriceUsd: listing.listingPricing?.fobPriceUsd ?? undefined,
+    // Rwanda stock uses base; China uses FOB. After China→Kigali transit, older rows
+    // may only have FOB/final until pricing is migrated — fall back so the edit form isn't blank.
+    basePriceUsd:
+      listing.listingPricing?.basePriceUsd ??
+      (sellerType === 'UZA_RWANDA_STOCK'
+        ? (listing.listingPricing?.finalPriceUsd ??
+          listing.listingPricing?.fobPriceUsd ??
+          undefined)
+        : undefined),
+    fobPriceUsd:
+      listing.listingPricing?.fobPriceUsd ??
+      (sellerType === 'UZA_CHINA_SOURCING'
+        ? (listing.listingPricing?.basePriceUsd ??
+          listing.listingPricing?.finalPriceUsd ??
+          undefined)
+        : undefined),
     discountUsd: listing.listingPricing?.discountUsd ?? undefined,
     status: listing.status,
   };

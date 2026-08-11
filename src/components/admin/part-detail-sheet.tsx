@@ -5,7 +5,7 @@ import { PartActions } from '@/components/admin/part-actions';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { partDisplayStatus } from '@/lib/admin/part-status';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
-import { formatDate, formatDateTime } from '@/lib/admin/format';
+import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
@@ -16,14 +16,6 @@ import {
 } from '@/components/ui/sheet';
 import { useAdminCategories, useAdminPart } from '@/queries/admin';
 import type { AdminPart, Category } from '@/types/admin/marketplace';
-
-function formatUsd(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function categoryLabel(slug: string, categories: Category[] | undefined) {
   const partsCategory = categories?.find(

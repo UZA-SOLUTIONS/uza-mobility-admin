@@ -328,6 +328,8 @@ export const adminListingFormSchema = adminListingFormFieldsSchema
       ])
       .optional(),
     removePhotoIds: z.array(z.string().min(1)).optional(),
+    photoOrder: z.array(z.string().min(1)).optional(),
+    primaryPhotoId: z.string().min(1).optional(),
     removeVideo: z.boolean().optional(),
     removeBrochure: z.boolean().optional(),
   })
@@ -354,6 +356,8 @@ export const adminUpdateListingSchema = adminListingFormFieldsSchema
       ])
       .optional(),
     removePhotoIds: z.array(z.string().min(1)).optional(),
+    photoOrder: z.array(z.string().min(1)).optional(),
+    primaryPhotoId: z.string().min(1).optional(),
     removeVideo: z.boolean().optional(),
     removeBrochure: z.boolean().optional(),
   })

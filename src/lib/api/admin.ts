@@ -224,6 +224,19 @@ export function unpublishListing(id: string) {
   });
 }
 
+export function advanceListingInventoryStage(
+  id: string,
+  stage: NonNullable<AdminListing['inventoryStage']>,
+) {
+  return authenticatedFetch<AdminListing>(
+    `/admin/listings/${id}/inventory-stage`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ stage }),
+    },
+  );
+}
+
 export function rejectListing(id: string, body: RejectListingInput) {
   return authenticatedFetch<AdminListing>(`/admin/listings/${id}/reject`, {
     method: 'PATCH',

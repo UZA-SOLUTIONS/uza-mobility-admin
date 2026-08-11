@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ExistingPhotosGrid } from '@/components/shared/existing-photos-grid';
+import {
+  ExistingPhotosGrid,
+  type ExistingPhoto,
+} from '@/components/shared/existing-photos-grid';
 import { PendingPhotoPicker } from '@/components/shared/pending-photo-picker';
 import { PricingBreakdown } from '@/components/shared/pricing-breakdown';
 import {
@@ -13,6 +16,7 @@ import {
   type PendingPhoto,
 } from '@/lib/pending-photos';
 import { adminListingToFormValues } from '@/lib/admin/listing-form';
+import { formatRwf } from '@/lib/admin/format';
 import {
   formatPricingRuleLabel,
   selectableListingPricingRules,
@@ -46,6 +50,7 @@ import {
   useUpdateAdminListing,
 } from '@/queries/admin';
 import { useAdminPricingRules } from '@/queries/platform';
+import { useAdminPlatformSettings } from '@/queries/platform-settings';
 import {
   adminCreateListingSchema,
   adminListingFormSchema,
@@ -90,11 +95,15 @@ export function ListingFormDialog({
   const update = useUpdateAdminListing();
   const { data: categories } = useAdminCategories({ isActive: true }, open);
   const { data: pricingRules } = useAdminPricingRules(open);
+  const { data: platformSettings } = useAdminPlatformSettings(open);
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
     null,
   );
   const [priceLoading, setPriceLoading] = useState(false);
   const [photos, setPhotos] = useState<PendingPhoto[]>([]);
+  const [orderedExistingPhotos, setOrderedExistingPhotos] = useState<
+    ExistingPhoto[]
+  >([]);
   const [removedPhotoIds, setRemovedPhotoIds] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [brochureFile, setBrochureFile] = useState<File | null>(null);
@@ -102,15 +111,43 @@ export function ListingFormDialog({
   const [removeBrochure, setRemoveBrochure] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const brochureInputRef = useRef<HTMLInputElement>(null);
-  const existingPhotos = listing?.photos ?? [];
-  const keptExistingPhotos = useMemo(
-    () => existingPhotos.filter((photo) => !removedPhotoIds.includes(photo.id)),
-    [existingPhotos, removedPhotoIds],
-  );
+  const existingPhotos = useMemo(() => {
+    const photos = listing?.photos ?? [];
+    return [...photos].sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [listing?.photos]);
+  const keptExistingPhotos = orderedExistingPhotos;
   const remainingPhotoSlots = Math.max(
     0,
     MAX_LISTING_PHOTOS - keptExistingPhotos.length - photos.length,
   );
+  const originalPhotoIds = useMemo(
+    () => existingPhotos.map((photo) => photo.id),
+    [existingPhotos],
+  );
+  const originalPrimaryPhotoId = useMemo(
+    () => existingPhotos.find((photo) => photo.isPrimary)?.id ?? null,
+    [existingPhotos],
+  );
+  const photoOrderChanged =
+    keptExistingPhotos.length !== originalPhotoIds.length ||
+    keptExistingPhotos.some(
+      (photo, index) => photo.id !== originalPhotoIds[index],
+    );
+  const primaryPhotoId =
+    keptExistingPhotos.find((photo) => photo.isPrimary)?.id ??
+    keptExistingPhotos[0]?.id ??
+    null;
+  const primaryChanged =
+    primaryPhotoId != null && primaryPhotoId !== originalPrimaryPhotoId;
+  const mediaDirty =
+    removedPhotoIds.length > 0 ||
+    photos.length > 0 ||
+    videoFile != null ||
+    brochureFile != null ||
+    removeVideo ||
+    removeBrochure ||
+    photoOrderChanged ||
+    primaryChanged;
   const busy = create.isPending || update.isPending;
 
   const form = useForm<AdminListingFormInput>({
@@ -134,6 +171,7 @@ export function ListingFormDialog({
       isFullOption: false,
     },
   });
+  const { isDirty } = form.formState;
 
   const sellerType = form.watch('sellerType');
   const categoryId = form.watch('categoryId');
@@ -143,6 +181,22 @@ export function ListingFormDialog({
   const country = form.watch('country');
   const description = form.watch('description') ?? '';
   const descriptionWordCount = countWords(description);
+  const effectiveRate =
+    platformSettings?.exchangeRate?.usdToRwfEffective ?? null;
+  const enteredUsdtAmount =
+    sellerType === 'UZA_RWANDA_STOCK'
+      ? Number(basePriceUsd)
+      : Number(fobPriceUsd);
+  const enteredRwfPreview =
+    effectiveRate != null &&
+    Number.isFinite(enteredUsdtAmount) &&
+    enteredUsdtAmount > 0
+      ? Math.round(enteredUsdtAmount * effectiveRate)
+      : null;
+  const finalRwfPreview =
+    effectiveRate != null && priceBreakdown?.finalPriceUsd != null
+      ? Math.round(priceBreakdown.finalPriceUsd * effectiveRate)
+      : null;
   const selectablePricingRules = useMemo(
     () =>
       selectableListingPricingRules(
@@ -161,14 +215,22 @@ export function ListingFormDialog({
     if (!open) return;
 
     if (sellerType === 'UZA_RWANDA_STOCK') {
-      form.setValue('country', 'RW');
+      form.setValue('country', 'RW', { shouldDirty: false });
       if (!isEdit) {
-        form.setValue('deliveryEstimateDays', RWANDA_STOCK_DELIVERY_DAYS.min);
+        form.setValue('deliveryEstimateDays', RWANDA_STOCK_DELIVERY_DAYS.min, {
+          shouldDirty: false,
+        });
       }
     } else {
-      form.setValue('country', 'CN');
+      form.setValue('country', 'CN', { shouldDirty: false });
       if (!isEdit) {
-        form.setValue('deliveryEstimateDays', CHINA_SOURCING_DELIVERY_DAYS.min);
+        form.setValue(
+          'deliveryEstimateDays',
+          CHINA_SOURCING_DELIVERY_DAYS.min,
+          {
+            shouldDirty: false,
+          },
+        );
       }
     }
   }, [sellerType, open, isEdit, form]);
@@ -213,6 +275,17 @@ export function ListingFormDialog({
       return [];
     });
     setRemovedPhotoIds([]);
+    setOrderedExistingPhotos(
+      listing
+        ? [...listing.photos]
+            .sort((a, b) => a.displayOrder - b.displayOrder)
+            .map((photo) => ({
+              id: photo.id,
+              url: photo.url,
+              isPrimary: photo.isPrimary,
+            }))
+        : [],
+    );
     setVideoFile(null);
     setBrochureFile(null);
     setRemoveVideo(false);
@@ -248,10 +321,16 @@ export function ListingFormDialog({
   }, [open, listing, form]);
 
   const onSubmit = form.handleSubmit((values) => {
-    const payload = { ...values, discountUsd: undefined };
+    const payload = { ...values };
     const newPhotos = pendingPhotoFiles(photos);
+    const formDirty = isDirty;
 
     if (isEdit && listing) {
+      if (!formDirty && !mediaDirty) {
+        toast.message('No changes to save');
+        return;
+      }
+
       const totalPhotosAfterSave = keptExistingPhotos.length + newPhotos.length;
       if (totalPhotosAfterSave < 1) {
         toast.error('Keep at least one photo, or upload a replacement.');
@@ -262,6 +341,12 @@ export function ListingFormDialog({
         ...payload,
         removePhotoIds:
           removedPhotoIds.length > 0 ? removedPhotoIds : undefined,
+        photoOrder:
+          photoOrderChanged || primaryChanged
+            ? keptExistingPhotos.map((photo) => photo.id)
+            : undefined,
+        primaryPhotoId:
+          primaryChanged && primaryPhotoId ? primaryPhotoId : undefined,
         removeVideo: removeVideo || undefined,
         removeBrochure: removeBrochure || undefined,
       });
@@ -312,7 +397,7 @@ export function ListingFormDialog({
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
           {isEdit
-            ? 'Update your UZA stock or sourcing listing. New photos are added to existing ones.'
+            ? 'Update your UZA stock or sourcing listing. Reorder existing photos, set a cover, remove, or add more.'
             : 'Each inventory channel uses its own seller profile on your account (e.g. Rwanda stock vs China sourcing).'}
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -916,13 +1001,18 @@ export function ListingFormDialog({
 
           {sellerType === 'UZA_RWANDA_STOCK' ? (
             <div className="space-y-1.5">
-              <Label htmlFor="base-price">Base price (USD)</Label>
+              <Label htmlFor="base-price">Base price (USDT)</Label>
               <NumberInput
                 id="base-price"
                 min={0}
                 step="0.01"
                 {...form.register('basePriceUsd', numberRegisterOptions())}
               />
+              {enteredRwfPreview != null ? (
+                <p className="text-xs text-muted-foreground">
+                  ≈ {formatRwf(enteredRwfPreview)} (effective rate incl. markup)
+                </p>
+              ) : null}
               {form.formState.errors.basePriceUsd ? (
                 <p className="text-sm text-destructive">
                   {form.formState.errors.basePriceUsd.message}
@@ -931,13 +1021,18 @@ export function ListingFormDialog({
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label htmlFor="fob-price">FOB price (USD)</Label>
+              <Label htmlFor="fob-price">FOB price (USDT)</Label>
               <NumberInput
                 id="fob-price"
                 min={0}
                 step="0.01"
                 {...form.register('fobPriceUsd', numberRegisterOptions())}
               />
+              {enteredRwfPreview != null ? (
+                <p className="text-xs text-muted-foreground">
+                  ≈ {formatRwf(enteredRwfPreview)} (effective rate incl. markup)
+                </p>
+              ) : null}
               {form.formState.errors.fobPriceUsd ? (
                 <p className="text-sm text-destructive">
                   {form.formState.errors.fobPriceUsd.message}
@@ -945,6 +1040,11 @@ export function ListingFormDialog({
               ) : null}
             </div>
           )}
+          {finalRwfPreview != null ? (
+            <p className="text-xs text-muted-foreground">
+              Calculated customer price ≈ {formatRwf(finalRwfPreview)}
+            </p>
+          ) : null}
 
           <div className="space-y-1.5">
             <Label htmlFor="listing-desc">Description</Label>
@@ -961,12 +1061,46 @@ export function ListingFormDialog({
           {isEdit ? (
             <ExistingPhotosGrid
               photos={keptExistingPhotos}
-              hint="Remove photos with ×, or add more below. At least one photo is required."
-              onRemovePhoto={(photoId) =>
+              hint="Use arrows to reorder, star to set cover, × to remove. At least one photo is required."
+              onRemovePhoto={(photoId) => {
                 setRemovedPhotoIds((current) =>
                   current.includes(photoId) ? current : [...current, photoId],
-                )
-              }
+                );
+                setOrderedExistingPhotos((current) => {
+                  const next = current.filter((photo) => photo.id !== photoId);
+                  if (next.length === 0) return next;
+                  if (next.some((photo) => photo.isPrimary)) return next;
+                  return next.map((photo, index) => ({
+                    ...photo,
+                    isPrimary: index === 0,
+                  }));
+                });
+              }}
+              onMovePhoto={(photoId, direction) => {
+                setOrderedExistingPhotos((current) => {
+                  const index = current.findIndex(
+                    (photo) => photo.id === photoId,
+                  );
+                  if (index < 0) return current;
+                  const targetIndex =
+                    direction === 'left' ? index - 1 : index + 1;
+                  if (targetIndex < 0 || targetIndex >= current.length) {
+                    return current;
+                  }
+                  const next = [...current];
+                  const [item] = next.splice(index, 1);
+                  next.splice(targetIndex, 0, item);
+                  return next;
+                });
+              }}
+              onSetPrimaryPhoto={(photoId) => {
+                setOrderedExistingPhotos((current) =>
+                  current.map((photo) => ({
+                    ...photo,
+                    isPrimary: photo.id === photoId,
+                  })),
+                );
+              }}
             />
           ) : null}
 
@@ -1101,7 +1235,10 @@ export function ListingFormDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={busy}>
+            <Button
+              type="submit"
+              disabled={busy || (isEdit && !isDirty && !mediaDirty)}
+            >
               {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create listing'}
             </Button>
           </DialogFooter>
