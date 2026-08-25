@@ -30,7 +30,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatInvoiceTotal, formatUsd } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useAdminBanks,
@@ -157,7 +157,7 @@ export function FinancingDetailSheet({
                     <dt className="text-muted-foreground">Invoice amount</dt>
                     <dd>
                       {request.invoice
-                        ? formatUsd(request.invoice.totalAmountUsd)
+                        ? formatInvoiceTotal(request.invoice)
                         : '—'}
                     </dd>
                   </div>

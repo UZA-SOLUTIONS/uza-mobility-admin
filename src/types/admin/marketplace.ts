@@ -55,6 +55,8 @@ export type AdminListingCategory = {
 
 export type AdminListingPricing = {
   finalPriceUsd: number;
+  finalPriceRwf?: number | null;
+  displayPriceRwf?: number | null;
   currency: string;
   basePriceUsd?: number | null;
   fobPriceUsd?: number | null;
@@ -70,6 +72,20 @@ export type AdminListingPricing = {
   commissionUsd?: number | null;
   ruleDiscountUsd?: number | null;
   discountUsd?: number | null;
+  basePriceRwf?: number | null;
+  fobPriceRwf?: number | null;
+  sellerDesiredPayoutRwf?: number | null;
+  shippingCostRwf?: number | null;
+  localChargesRwf?: number | null;
+  taxesEstimateRwf?: number | null;
+  insuranceRwf?: number | null;
+  storageRwf?: number | null;
+  clearingFeeRwf?: number | null;
+  landingCostRwf?: number | null;
+  marginRwf?: number | null;
+  commissionRwf?: number | null;
+  ruleDiscountRwf?: number | null;
+  discountRwf?: number | null;
   priceNotes?: string | null;
 };
 

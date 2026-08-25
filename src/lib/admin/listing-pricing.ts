@@ -1,6 +1,7 @@
 import type { PricingRule } from '@/types/admin/platform';
 import type { PriceBreakdown } from '@/types/pricing';
 import type { AdminListingPricing } from '@/types/admin/marketplace';
+import { formatRwf, usdtToRwf } from '@/lib/admin/format';
 
 export function parseListingPricingRuleId(
   priceNotes: string | null | undefined,
@@ -51,25 +52,42 @@ function derivePlatformMarginRatePercent(
 
   if (
     sellerType === 'UZA_CHINA_SOURCING' &&
-    pricing.landingCostUsd != null &&
-    pricing.landingCostUsd > 0 &&
-    pricing.marginUsd != null
+    (pricing.landingCostRwf ?? pricing.landingCostUsd) != null &&
+    (pricing.landingCostRwf ?? 0) + (pricing.landingCostUsd ?? 0) > 0 &&
+    (pricing.marginRwf != null || pricing.marginUsd != null)
   ) {
-    return (pricing.marginUsd / pricing.landingCostUsd) * 100;
+    const landing =
+      pricing.landingCostRwf ?? usdtToRwf(pricing.landingCostUsd) ?? 0;
+    const margin = pricing.marginRwf ?? usdtToRwf(pricing.marginUsd) ?? 0;
+    if (landing > 0) {
+      return (margin / landing) * 100;
+    }
   }
 
-  if (sellerType === 'INTERNATIONAL_SELLER' && pricing.marginUsd != null) {
+  if (
+    sellerType === 'INTERNATIONAL_SELLER' &&
+    (pricing.marginRwf != null || pricing.marginUsd != null)
+  ) {
     const base =
-      (pricing.fobPriceUsd ?? 0) +
-      (pricing.shippingCostUsd ?? 0) +
-      (pricing.localChargesUsd ?? 0) +
-      (pricing.taxesEstimateUsd ?? 0);
+      (pricing.fobPriceRwf ?? usdtToRwf(pricing.fobPriceUsd) ?? 0) +
+      (pricing.shippingCostRwf ?? usdtToRwf(pricing.shippingCostUsd) ?? 0) +
+      (pricing.localChargesRwf ?? usdtToRwf(pricing.localChargesUsd) ?? 0) +
+      (pricing.taxesEstimateRwf ?? usdtToRwf(pricing.taxesEstimateUsd) ?? 0);
+    const margin = pricing.marginRwf ?? usdtToRwf(pricing.marginUsd) ?? 0;
     if (base > 0) {
-      return (pricing.marginUsd / base) * 100;
+      return (margin / base) * 100;
     }
   }
 
   return undefined;
+}
+
+function asRwf(
+  amountRwf: number | null | undefined,
+  amountUsd: number | null | undefined,
+): number | undefined {
+  if (amountRwf != null) return amountRwf;
+  return usdtToRwf(amountUsd) ?? undefined;
 }
 
 export function listingPricingToBreakdown(
@@ -78,33 +96,44 @@ export function listingPricingToBreakdown(
 ): PriceBreakdown | null {
   if (!pricing) return null;
 
+  const finalPriceRwf =
+    asRwf(
+      pricing.finalPriceRwf ?? pricing.displayPriceRwf,
+      pricing.finalPriceUsd,
+    ) ?? 0;
+
   return {
     sellerType,
-    basePriceUsd: pricing.basePriceUsd ?? undefined,
-    fobPriceUsd: pricing.fobPriceUsd ?? undefined,
-    sellerDesiredPayoutUsd: pricing.sellerDesiredPayoutUsd ?? undefined,
-    shippingCostUsd: pricing.shippingCostUsd ?? undefined,
-    localChargesUsd: pricing.localChargesUsd ?? undefined,
-    taxesEstimateUsd: pricing.taxesEstimateUsd ?? undefined,
-    insuranceUsd: pricing.insuranceUsd ?? undefined,
-    storageUsd: pricing.storageUsd ?? undefined,
-    clearingFeeUsd: pricing.clearingFeeUsd ?? undefined,
-    landingCostUsd: pricing.landingCostUsd ?? undefined,
-    marginUsd: pricing.marginUsd ?? undefined,
+    basePriceRwf: asRwf(pricing.basePriceRwf, pricing.basePriceUsd),
+    fobPriceRwf: asRwf(pricing.fobPriceRwf, pricing.fobPriceUsd),
+    sellerDesiredPayoutRwf: asRwf(
+      pricing.sellerDesiredPayoutRwf,
+      pricing.sellerDesiredPayoutUsd,
+    ),
+    shippingCostRwf: asRwf(pricing.shippingCostRwf, pricing.shippingCostUsd),
+    localChargesRwf: asRwf(pricing.localChargesRwf, pricing.localChargesUsd),
+    taxesEstimateRwf: asRwf(pricing.taxesEstimateRwf, pricing.taxesEstimateUsd),
+    insuranceRwf: asRwf(pricing.insuranceRwf, pricing.insuranceUsd),
+    storageRwf: asRwf(pricing.storageRwf, pricing.storageUsd),
+    clearingFeeRwf: asRwf(pricing.clearingFeeRwf, pricing.clearingFeeUsd),
+    landingCostRwf: asRwf(pricing.landingCostRwf, pricing.landingCostUsd),
+    marginRwf: asRwf(pricing.marginRwf, pricing.marginUsd),
     platformMarginRatePercent: derivePlatformMarginRatePercent(
       pricing,
       sellerType,
     ),
-    commissionUsd: pricing.commissionUsd ?? undefined,
-    ruleDiscountUsd: pricing.ruleDiscountUsd ?? undefined,
+    commissionRwf: asRwf(pricing.commissionRwf, pricing.commissionUsd),
+    ruleDiscountRwf: asRwf(pricing.ruleDiscountRwf, pricing.ruleDiscountUsd),
     ruleDiscountRatePercent: parseListingPricingRuleDiscountRate(
       pricing.priceNotes,
     ),
-    discountUsd: pricing.discountUsd ?? undefined,
+    discountRwf: asRwf(pricing.discountRwf, pricing.discountUsd),
+    finalPriceRwf,
+    displayPriceRwf: pricing.displayPriceRwf ?? finalPriceRwf,
     finalPriceUsd: pricing.finalPriceUsd,
     deliveryDaysMin: 0,
     deliveryDaysMax: 0,
-    currency: pricing.currency ?? 'USD',
+    currency: pricing.currency === 'USD' ? 'USD' : 'RWF',
   };
 }
 
@@ -126,11 +155,11 @@ export function formatPricingRuleLabel(rule: PricingRule): string {
   if (rule.commissionRate != null) {
     parts.push(`${(rule.commissionRate * 100).toFixed(1)}% commission`);
   }
-  if (rule.shippingCostUsd != null) {
-    parts.push(`$${rule.shippingCostUsd} shipping`);
+  if (rule.shippingCostRwf != null) {
+    parts.push(`${formatRwf(rule.shippingCostRwf)} shipping`);
   }
-  if (rule.localChargesUsd != null) {
-    parts.push(`$${rule.localChargesUsd} local`);
+  if (rule.localChargesRwf != null) {
+    parts.push(`${formatRwf(rule.localChargesRwf)} local`);
   }
   if (rule.taxRatePercent != null) {
     parts.push(`${rule.taxRatePercent}% tax`);
@@ -138,8 +167,8 @@ export function formatPricingRuleLabel(rule: PricingRule): string {
   if (rule.insuranceRatePercent != null) {
     parts.push(`${rule.insuranceRatePercent}% insurance`);
   }
-  if (rule.clearingFeeUsd != null) {
-    parts.push(`$${rule.clearingFeeUsd} clearing`);
+  if (rule.clearingFeeRwf != null) {
+    parts.push(`${formatRwf(rule.clearingFeeRwf)} clearing`);
   }
   if (rule.deliveryDaysMin != null && rule.deliveryDaysMax != null) {
     parts.push(`${rule.deliveryDaysMin}–${rule.deliveryDaysMax}d delivery`);

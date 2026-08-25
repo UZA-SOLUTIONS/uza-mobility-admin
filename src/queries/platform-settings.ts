@@ -6,7 +6,6 @@ import { ApiClientError } from '@/lib/api';
 import {
   getAdminPlatformSettings,
   getExchangeRate,
-  refreshAdminExchangeRate,
   updateAdminPlatformSettings,
 } from '@/lib/api/platform-settings';
 import { bookingKeys } from '@/queries/bookings';
@@ -53,22 +52,5 @@ export function useUpdatePlatformSettings() {
       toast.success('Platform settings updated');
     },
     onError: (error) => toastError(error, 'Unable to update platform settings'),
-  });
-}
-
-export function useRefreshExchangeRate() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: refreshAdminExchangeRate,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: platformSettingsKeys.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: platformSettingsKeys.exchangeRate(),
-      });
-      toast.success('Exchange rate refreshed');
-    },
-    onError: (error) => toastError(error, 'Unable to refresh exchange rate'),
   });
 }

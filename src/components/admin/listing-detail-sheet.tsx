@@ -10,7 +10,7 @@ import {
   formatDateTime,
   formatEnumLabel,
   formatRegistrationStatus,
-  formatUsd,
+  formatListingPrice,
 } from '@/components/admin/shared/detail-fields';
 import { canAdminEditOwnListing } from '@/lib/admin/listing-form';
 import { listingPricingToBreakdown } from '@/lib/admin/listing-pricing';
@@ -298,7 +298,7 @@ export function ListingDetailSheet({
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 <DetailRow
                   label="List price"
-                  value={formatUsd(pricing?.finalPriceUsd)}
+                  value={formatListingPrice(pricing)}
                 />
               </dl>
             )}

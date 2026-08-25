@@ -190,11 +190,11 @@ export function useUpdateBookingFee() {
   return useMutation({
     mutationFn: ({
       id,
-      bookingFeeUsd,
+      bookingFeeRwf,
     }: {
       id: string;
-      bookingFeeUsd: number;
-    }) => adminUpdateBookingFee(id, { bookingFeeUsd }),
+      bookingFeeRwf: number;
+    }) => adminUpdateBookingFee(id, { bookingFeeRwf }),
     onSuccess: () => {
       invalidateAdminBookings(queryClient);
       toast.success('Booking fee updated');

@@ -19,8 +19,8 @@ import { usePermissions } from '@/hooks/permissions';
 import {
   formatDate,
   formatDateTime,
+  formatBookingFee,
   formatSettledAmount,
-  formatUsd,
 } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
@@ -120,7 +120,7 @@ export function BookingDetailSheet({
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Booking fee</dt>
                     <dd className="font-medium">
-                      {formatUsd(booking.bookingFeeUsd)}
+                      {formatBookingFee(booking)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">

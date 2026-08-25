@@ -211,9 +211,9 @@ const adminListingFormFieldsSchema = z.object({
   payloadCapacityKg: z.number().min(0).optional(),
   grossVehicleWeightKg: z.number().min(0).optional(),
   pricingRuleId: z.string().min(1, 'Select a pricing rule'),
-  basePriceUsd: z.number().min(0).optional(),
-  fobPriceUsd: z.number().min(0).optional(),
-  discountUsd: z.number().min(0).optional(),
+  basePriceRwf: z.number().min(0).optional(),
+  fobPriceRwf: z.number().min(0).optional(),
+  discountRwf: z.number().min(0).optional(),
 });
 
 function refineListingEvSpecs(
@@ -289,22 +289,22 @@ function refineAdminListingPricing(
 ) {
   if (
     data.sellerType === 'UZA_RWANDA_STOCK' &&
-    (data.basePriceUsd == null || data.basePriceUsd <= 0)
+    (data.basePriceRwf == null || data.basePriceRwf <= 0)
   ) {
     ctx.addIssue({
       code: 'custom',
-      message: 'Base price (USD) is required for Rwanda stock',
-      path: ['basePriceUsd'],
+      message: 'Base price (Rwf) is required for Rwanda stock',
+      path: ['basePriceRwf'],
     });
   }
   if (
     data.sellerType === 'UZA_CHINA_SOURCING' &&
-    (data.fobPriceUsd == null || data.fobPriceUsd <= 0)
+    (data.fobPriceRwf == null || data.fobPriceRwf <= 0)
   ) {
     ctx.addIssue({
       code: 'custom',
-      message: 'FOB price (USD) is required for China sourcing',
-      path: ['fobPriceUsd'],
+      message: 'FOB price (Rwf) is required for China sourcing',
+      path: ['fobPriceRwf'],
     });
   }
 }

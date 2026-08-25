@@ -5,28 +5,31 @@ export type ExchangeRateSnapshot = {
   rateFetchedAt: string | null;
   baseCurrency: 'USDT';
   quoteCurrency: 'RWF';
+  frozen?: boolean;
 };
 
 export type PlatformSettings = {
   bookingFeeUsd: number;
+  bookingFeeRwf: number;
   companyLegalName: string;
   companyBankName: string;
   companyAccountNumber: string;
   companyBankNameRwf: string;
   companyAccountNumberRwf: string;
   companyWhatsappNumber: string;
-  currency: 'USDT' | 'USD';
+  currency: 'RWF' | 'USDT' | 'USD';
   rwfMarkupPercent: number;
   exchangeRate: ExchangeRateSnapshot;
 };
 
 export type UpdatePlatformSettingsInput = {
   bookingFeeUsd?: number;
+  bookingFeeRwf?: number;
+  usdToRwfEffective?: number;
   companyLegalName?: string;
   companyBankName?: string;
   companyAccountNumber?: string;
   companyBankNameRwf?: string;
   companyAccountNumberRwf?: string;
   companyWhatsappNumber?: string;
-  rwfMarkupPercent?: number;
 };

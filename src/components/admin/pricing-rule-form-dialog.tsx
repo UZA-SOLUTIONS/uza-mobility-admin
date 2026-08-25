@@ -61,12 +61,12 @@ export function PricingRuleFormDialog({
         sellerType: rule.sellerType,
         originCountry: rule.originCountry ?? '',
         destinationCountry: rule.destinationCountry ?? '',
-        shippingCostUsd: rule.shippingCostUsd ?? undefined,
-        localChargesUsd: rule.localChargesUsd ?? undefined,
+        shippingCostRwf: rule.shippingCostRwf ?? undefined,
+        localChargesRwf: rule.localChargesRwf ?? undefined,
         taxRatePercent: rule.taxRatePercent ?? undefined,
         insuranceRatePercent: rule.insuranceRatePercent ?? undefined,
-        storagePerDayUsd: rule.storagePerDayUsd ?? undefined,
-        clearingFeeUsd: rule.clearingFeeUsd ?? undefined,
+        storagePerDayRwf: rule.storagePerDayRwf ?? undefined,
+        clearingFeeRwf: rule.clearingFeeRwf ?? undefined,
         platformMarginPercent: rule.platformMarginPercent ?? undefined,
         commissionRate: rule.commissionRate ?? undefined,
         discountRatePercent: rule.discountRatePercent ?? undefined,
@@ -156,19 +156,19 @@ export function PricingRuleFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="pr-ship">Shipping (USD)</Label>
+              <Label htmlFor="pr-ship">Shipping (Rwf)</Label>
               <NumberInput
                 id="pr-ship"
-                step="0.01"
-                {...form.register('shippingCostUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('shippingCostRwf', numberRegisterOptions())}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pr-local">Local charges (USD)</Label>
+              <Label htmlFor="pr-local">Local charges (Rwf)</Label>
               <NumberInput
                 id="pr-local"
-                step="0.01"
-                {...form.register('localChargesUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('localChargesRwf', numberRegisterOptions())}
               />
             </div>
             <div className="space-y-1.5">
@@ -221,19 +221,19 @@ export function PricingRuleFormDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pr-clear">Clearing fee (USD)</Label>
+              <Label htmlFor="pr-clear">Clearing fee (Rwf)</Label>
               <NumberInput
                 id="pr-clear"
-                step="0.01"
-                {...form.register('clearingFeeUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('clearingFeeRwf', numberRegisterOptions())}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pr-storage">Storage / day (USD)</Label>
+              <Label htmlFor="pr-storage">Storage / day (Rwf)</Label>
               <NumberInput
                 id="pr-storage"
-                step="0.01"
-                {...form.register('storagePerDayUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('storagePerDayRwf', numberRegisterOptions())}
               />
             </div>
             <div className="space-y-1.5">

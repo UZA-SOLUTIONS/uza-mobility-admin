@@ -1,13 +1,13 @@
 'use client';
 
-import { formatUsd } from '@/lib/admin/format';
+import { formatRwf } from '@/lib/admin/format';
 import type { PriceBreakdown } from '@/types/pricing';
 
 function formatAmountWithPercent(
   amount: number | undefined,
   ratePercent?: number,
 ): string {
-  const formatted = formatUsd(amount);
+  const formatted = formatRwf(amount);
   if (ratePercent != null && ratePercent > 0) {
     const displayRate =
       ratePercent % 1 === 0 ? ratePercent.toFixed(0) : ratePercent.toFixed(2);
@@ -58,25 +58,25 @@ export function PricingBreakdown({
 
   const type = sellerType ?? breakdown.sellerType;
   const showDiscount =
-    (breakdown.ruleDiscountUsd ?? 0) > 0 ||
+    (breakdown.ruleDiscountRwf ?? 0) > 0 ||
     breakdown.ruleDiscountRatePercent != null;
 
   const discountLine = showDiscount ? (
     <Line
       label="Discount"
       value={formatAmountWithPercent(
-        breakdown.ruleDiscountUsd,
+        breakdown.ruleDiscountRwf,
         breakdown.ruleDiscountRatePercent,
       )}
     />
   ) : null;
 
   const marginLine =
-    breakdown.marginUsd != null ? (
+    breakdown.marginRwf != null ? (
       <Line
         label="Platform margin"
         value={formatAmountWithPercent(
-          breakdown.marginUsd,
+          breakdown.marginRwf,
           breakdown.platformMarginRatePercent,
         )}
       />
@@ -85,7 +85,7 @@ export function PricingBreakdown({
   const listPriceLine = (
     <Line
       label="Buyer pays (list price)"
-      value={formatUsd(breakdown.finalPriceUsd)}
+      value={formatRwf(breakdown.finalPriceRwf)}
       emphasis
     />
   );
@@ -97,34 +97,34 @@ export function PricingBreakdown({
       </p>
       {type === 'UZA_RWANDA_STOCK' ? (
         <>
-          <Line label="Base price" value={formatUsd(breakdown.basePriceUsd)} />
+          <Line label="Base price" value={formatRwf(breakdown.basePriceRwf)} />
           {discountLine}
           {listPriceLine}
         </>
       ) : type === 'UZA_CHINA_SOURCING' ? (
         <>
-          <Line label="FOB price" value={formatUsd(breakdown.fobPriceUsd)} />
-          <Line label="Shipping" value={formatUsd(breakdown.shippingCostUsd)} />
+          <Line label="FOB price" value={formatRwf(breakdown.fobPriceRwf)} />
+          <Line label="Shipping" value={formatRwf(breakdown.shippingCostRwf)} />
           <Line
             label="Local charges"
-            value={formatUsd(breakdown.localChargesUsd)}
+            value={formatRwf(breakdown.localChargesRwf)}
           />
           <Line
             label="Taxes (est.)"
-            value={formatUsd(breakdown.taxesEstimateUsd)}
+            value={formatRwf(breakdown.taxesEstimateRwf)}
           />
           <Line
             label="Insurance (est.)"
-            value={formatUsd(breakdown.insuranceUsd)}
+            value={formatRwf(breakdown.insuranceRwf)}
           />
-          <Line label="Storage" value={formatUsd(breakdown.storageUsd)} />
+          <Line label="Storage" value={formatRwf(breakdown.storageRwf)} />
           <Line
             label="Clearing fee"
-            value={formatUsd(breakdown.clearingFeeUsd)}
+            value={formatRwf(breakdown.clearingFeeRwf)}
           />
           <Line
             label="Landing cost"
-            value={formatUsd(breakdown.landingCostUsd)}
+            value={formatRwf(breakdown.landingCostRwf)}
           />
           {marginLine}
           {discountLine}
@@ -134,26 +134,26 @@ export function PricingBreakdown({
         <>
           <Line
             label="Seller payout"
-            value={formatUsd(breakdown.sellerDesiredPayoutUsd)}
+            value={formatRwf(breakdown.sellerDesiredPayoutRwf)}
           />
           <Line
             label="Platform commission"
-            value={formatUsd(breakdown.commissionUsd)}
+            value={formatRwf(breakdown.commissionRwf)}
           />
           {discountLine}
           {listPriceLine}
         </>
       ) : type === 'INTERNATIONAL_SELLER' ? (
         <>
-          <Line label="FOB price" value={formatUsd(breakdown.fobPriceUsd)} />
-          <Line label="Shipping" value={formatUsd(breakdown.shippingCostUsd)} />
+          <Line label="FOB price" value={formatRwf(breakdown.fobPriceRwf)} />
+          <Line label="Shipping" value={formatRwf(breakdown.shippingCostRwf)} />
           <Line
             label="Local charges"
-            value={formatUsd(breakdown.localChargesUsd)}
+            value={formatRwf(breakdown.localChargesRwf)}
           />
           <Line
             label="Taxes (est.)"
-            value={formatUsd(breakdown.taxesEstimateUsd)}
+            value={formatRwf(breakdown.taxesEstimateRwf)}
           />
           {marginLine}
           {discountLine}

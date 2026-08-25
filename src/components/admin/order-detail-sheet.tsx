@@ -26,7 +26,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatDateTime, formatInvoiceTotal } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import {
@@ -201,7 +201,7 @@ export function OrderDetailSheet({
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Amount</dt>
                     <dd className="font-medium">
-                      {formatUsd(order.invoice.totalAmountUsd)}
+                      {formatInvoiceTotal(order.invoice)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">

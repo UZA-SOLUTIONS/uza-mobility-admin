@@ -32,8 +32,8 @@ import { usePermissions } from '@/hooks/permissions';
 import {
   formatDate,
   formatDateTime,
+  formatInvoiceTotal,
   formatSettledAmount,
-  formatUsd,
 } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
@@ -154,7 +154,7 @@ export function PaymentDetailSheet({
                   ) : null}
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Invoice total</dt>
-                    <dd>{formatUsd(payment.invoice.totalAmountUsd)}</dd>
+                    <dd>{formatInvoiceTotal(payment.invoice)}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                     <dt className="text-muted-foreground">Sender</dt>

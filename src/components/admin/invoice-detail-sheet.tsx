@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
-import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatDateTime, formatInvoiceTotal, formatSettledAmount } from '@/lib/admin/format';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   downloadAdminInvoiceDocument,
@@ -86,9 +86,9 @@ export function InvoiceDetailSheet({
                     <dd>{invoice.buyerEmail ?? '—'}</dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Total (USD)</dt>
+                    <dt className="text-muted-foreground">Total</dt>
                     <dd className="font-medium">
-                      {formatUsd(invoice.totalAmountUsd)} {invoice.currency}
+                      {formatInvoiceTotal(invoice)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
@@ -150,16 +150,20 @@ export function InvoiceDetailSheet({
                       <dt className="text-muted-foreground">Beneficiary</dt>
                       <dd>{invoice.beneficiaryName ?? '—'}</dd>
                     </div>
-                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                      <dt className="text-muted-foreground">USD bank</dt>
-                      <dd>{invoice.bankName ?? '—'}</dd>
-                    </div>
-                    <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
-                      <dt className="text-muted-foreground">USD account</dt>
-                      <dd className="font-mono text-xs">
-                        {invoice.accountNumber ?? '—'}
-                      </dd>
-                    </div>
+                    {invoice.currency === 'USD' ? (
+                      <>
+                        <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
+                          <dt className="text-muted-foreground">USD bank</dt>
+                          <dd>{invoice.bankName ?? '—'}</dd>
+                        </div>
+                        <div className="flex justify-between gap-4 sm:col-span-2 sm:flex-col sm:gap-1">
+                          <dt className="text-muted-foreground">USD account</dt>
+                          <dd className="font-mono text-xs">
+                            {invoice.accountNumber ?? '—'}
+                          </dd>
+                        </div>
+                      </>
+                    ) : null}
                     <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
                       <dt className="text-muted-foreground">Rwf bank</dt>
                       <dd>{invoice.rwfBankName ?? '—'}</dd>
@@ -205,7 +209,7 @@ export function InvoiceDetailSheet({
                           key={payment.id}
                           className="flex items-center justify-between rounded-md border px-3 py-2"
                         >
-                          <span>{formatUsd(payment.amountPaid)}</span>
+                          <span>{formatSettledAmount(payment.amountPaid, payment.currency)}</span>
                           <StatusBadge status={payment.status} />
                         </li>
                       ))}

@@ -54,9 +54,9 @@ export function calculateAdminPricing(body: {
   sellerType: string;
   originCountry?: string;
   pricingRuleId?: string;
-  basePriceUsd?: number;
-  fobPriceUsd?: number;
-  discountUsd?: number;
+  basePriceRwf?: number;
+  fobPriceRwf?: number;
+  discountRwf?: number;
 }) {
   return authenticatedFetch<import('@/types/pricing').PriceBreakdown>(
     '/admin/pricing-rules/calculate',

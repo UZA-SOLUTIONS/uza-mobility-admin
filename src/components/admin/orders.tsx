@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDate, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatInvoiceTotal } from '@/lib/admin/format';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import { useAdminOrders } from '@/queries/commerce';
 import { orderStatuses, type AdminOrdersFilters } from '@/types/admin/commerce';
@@ -159,7 +159,7 @@ export function AdminOrdersPanel() {
                       {formatSellerChannel(order.sellerType)}
                     </TableCell>
                     <TableCell>
-                      {formatUsd(order.invoice.totalAmountUsd)}
+                      {formatInvoiceTotal(order.invoice)}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={order.status} />

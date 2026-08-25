@@ -35,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatDate, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatInvoiceTotal } from '@/lib/admin/format';
 import {
   useAdminBanks,
   useAdminFinancing,
@@ -186,7 +186,7 @@ export function AdminFinancingPanel() {
                             {item.invoice.invoiceNumber}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {formatUsd(item.invoice.totalAmountUsd)}
+                            {formatInvoiceTotal(item.invoice)}
                           </div>
                         </>
                       ) : (

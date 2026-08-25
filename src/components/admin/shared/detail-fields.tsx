@@ -44,7 +44,7 @@ export function formatDateTime(value: string | null | undefined) {
   return new Date(value).toLocaleString();
 }
 
-export { formatUsd } from '@/lib/admin/format';
+export { formatListingPrice, formatUsd } from '@/lib/admin/format';
 
 const registrationStatusLabels: Record<string, string> = {
   REGISTERED: 'Registered',

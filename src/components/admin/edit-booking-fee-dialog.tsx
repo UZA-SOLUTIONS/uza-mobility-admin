@@ -11,9 +11,14 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { NumberInput } from '@/components/ui/number-input';
-import { formatUsd } from '@/lib/admin/format';
+import { formatBookingFee, usdtToRwf } from '@/lib/admin/format';
 import { useUpdateBookingFee } from '@/queries/bookings';
 import type { VehicleBooking } from '@/types/buyer/bookings';
+
+function currentFeeRwf(booking: VehicleBooking): number {
+  if (booking.bookingFeeRwf != null) return booking.bookingFeeRwf;
+  return usdtToRwf(booking.bookingFeeUsd) ?? booking.bookingFeeUsd;
+}
 
 type EditBookingFeeDialogProps = {
   open: boolean;
@@ -31,7 +36,7 @@ export function EditBookingFeeDialog({
 
   useEffect(() => {
     if (open && booking) {
-      setFee(String(booking.bookingFeeUsd));
+      setFee(String(currentFeeRwf(booking)));
     }
   }, [open, booking]);
 
@@ -40,12 +45,12 @@ export function EditBookingFeeDialog({
     Boolean(booking) &&
     Number.isFinite(parsedFee) &&
     parsedFee > 0 &&
-    parsedFee !== booking?.bookingFeeUsd;
+    parsedFee !== (booking ? currentFeeRwf(booking) : undefined);
 
   const onSave = () => {
     if (!booking || !canSave) return;
     update.mutate(
-      { id: booking.id, bookingFeeUsd: parsedFee },
+      { id: booking.id, bookingFeeRwf: Math.round(parsedFee) },
       {
         onSuccess: () => {
           onOpenChange(false);
@@ -68,19 +73,19 @@ export function EditBookingFeeDialog({
               {booking.bookingNumber}
             </p>
             <div className="space-y-1.5">
-              <Label htmlFor="booking-fee">Fee (USD)</Label>
+              <Label htmlFor="booking-fee">Fee (Rwf)</Label>
               <NumberInput
                 id="booking-fee"
-                min={0.01}
-                step="0.01"
+                min={1}
+                step="1"
                 value={fee}
                 onChange={(event) => setFee(event.target.value)}
                 disabled={update.isPending}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Current fee: {formatUsd(booking.bookingFeeUsd)}. The buyer is
-              notified when you change this.
+              Current fee: {formatBookingFee(booking)}. The buyer is notified
+              when you change this.
             </p>
           </div>
         ) : null}

@@ -46,7 +46,7 @@ export type CreateBankInput = z.infer<typeof createBankSchema>;
 export const createFleetInvoiceSchema = z.object({
   userId: z.string().min(1, 'Select a buyer'),
   listingId: z.string().optional(),
-  totalAmountUsd: z.number().min(0.01, 'Amount must be greater than zero'),
+  totalAmountRwf: z.number().min(1, 'Amount must be greater than zero'),
   notes: z.string().max(2000).optional(),
 });
 

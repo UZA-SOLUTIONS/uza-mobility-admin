@@ -49,9 +49,9 @@ type AdminListingFormFlattenKeys =
   | 'topSpeedKmh'
   | 'payloadCapacityKg'
   | 'grossVehicleWeightKg'
-  | 'basePriceUsd'
-  | 'fobPriceUsd'
-  | 'discountUsd'
+  | 'basePriceRwf'
+  | 'fobPriceRwf'
+  | 'discountRwf'
   | 'pricingRuleId';
 
 type AdminListingApiExtras = {
@@ -69,9 +69,9 @@ type AdminListingApiExtras = {
     grossVehicleWeightKg?: number;
   };
   pricing: {
-    basePriceUsd?: number;
-    fobPriceUsd?: number;
-    discountUsd?: number;
+    basePriceRwf?: number;
+    fobPriceRwf?: number;
+    discountRwf?: number;
     pricingRuleId?: string;
   };
 };
@@ -92,9 +92,9 @@ function buildAdminListingApiBody(
   input: AdminCreateListingInput | AdminUpdateListingInput,
 ) {
   const {
-    basePriceUsd,
-    fobPriceUsd,
-    discountUsd,
+    basePriceRwf,
+    fobPriceRwf,
+    discountRwf,
     pricingRuleId,
     description,
     trim,
@@ -136,12 +136,12 @@ function buildAdminListingApiBody(
     useCases: useCases?.length ? useCases : undefined,
     evSpecs,
     pricing: {
-      basePriceUsd:
-        input.sellerType === 'UZA_RWANDA_STOCK' ? basePriceUsd : undefined,
-      fobPriceUsd:
-        input.sellerType === 'UZA_CHINA_SOURCING' ? fobPriceUsd : undefined,
-      discountUsd:
-        discountUsd != null && discountUsd > 0 ? discountUsd : undefined,
+      basePriceRwf:
+        input.sellerType === 'UZA_RWANDA_STOCK' ? basePriceRwf : undefined,
+      fobPriceRwf:
+        input.sellerType === 'UZA_CHINA_SOURCING' ? fobPriceRwf : undefined,
+      discountRwf:
+        discountRwf != null && discountRwf > 0 ? discountRwf : undefined,
       pricingRuleId,
     },
   };

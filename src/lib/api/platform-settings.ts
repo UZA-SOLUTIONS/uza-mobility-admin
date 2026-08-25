@@ -20,10 +20,3 @@ export function updateAdminPlatformSettings(body: UpdatePlatformSettingsInput) {
     body: JSON.stringify(body),
   });
 }
-
-export function refreshAdminExchangeRate() {
-  return authenticatedFetch<PlatformSettings['exchangeRate']>(
-    '/admin/platform-settings/refresh-exchange-rate',
-    { method: 'POST' },
-  );
-}

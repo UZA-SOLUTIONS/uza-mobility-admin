@@ -60,12 +60,12 @@ export type PricingRule = {
   sellerType: PricingSellerType;
   originCountry: string | null;
   destinationCountry: string | null;
-  shippingCostUsd: number | null;
-  localChargesUsd: number | null;
+  shippingCostRwf: number | null;
+  localChargesRwf: number | null;
   taxRatePercent: number | null;
   insuranceRatePercent: number | null;
-  storagePerDayUsd: number | null;
-  clearingFeeUsd: number | null;
+  storagePerDayRwf: number | null;
+  clearingFeeRwf: number | null;
   platformMarginPercent: number | null;
   commissionRate: number | null;
   discountRatePercent: number | null;

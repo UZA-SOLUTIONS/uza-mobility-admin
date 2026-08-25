@@ -28,7 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAdminListings } from '@/queries/admin';
-import { formatUsd } from '@/lib/admin/format';
+import { formatListingPrice } from '@/lib/admin/format';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import {
   adminListingChannelTypes,
@@ -225,7 +225,7 @@ export function AdminListingsPanel() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {formatUsd(listing.listingPricing?.finalPriceUsd)}
+                      {formatListingPrice(listing.listingPricing)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {formatDate(listing.updatedAt)}

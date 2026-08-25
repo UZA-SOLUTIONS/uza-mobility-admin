@@ -50,7 +50,6 @@ import {
   useUpdateAdminListing,
 } from '@/queries/admin';
 import { useAdminPricingRules } from '@/queries/platform';
-import { useAdminPlatformSettings } from '@/queries/platform-settings';
 import {
   adminCreateListingSchema,
   adminListingFormSchema,
@@ -95,7 +94,6 @@ export function ListingFormDialog({
   const update = useUpdateAdminListing();
   const { data: categories } = useAdminCategories({ isActive: true }, open);
   const { data: pricingRules } = useAdminPricingRules(open);
-  const { data: platformSettings } = useAdminPlatformSettings(open);
   const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(
     null,
   );
@@ -176,27 +174,11 @@ export function ListingFormDialog({
   const sellerType = form.watch('sellerType');
   const categoryId = form.watch('categoryId');
   const pricingRuleId = form.watch('pricingRuleId');
-  const basePriceUsd = form.watch('basePriceUsd');
-  const fobPriceUsd = form.watch('fobPriceUsd');
+  const basePriceRwf = form.watch('basePriceRwf');
+  const fobPriceRwf = form.watch('fobPriceRwf');
   const country = form.watch('country');
   const description = form.watch('description') ?? '';
   const descriptionWordCount = countWords(description);
-  const effectiveRate =
-    platformSettings?.exchangeRate?.usdToRwfEffective ?? null;
-  const enteredUsdtAmount =
-    sellerType === 'UZA_RWANDA_STOCK'
-      ? Number(basePriceUsd)
-      : Number(fobPriceUsd);
-  const enteredRwfPreview =
-    effectiveRate != null &&
-    Number.isFinite(enteredUsdtAmount) &&
-    enteredUsdtAmount > 0
-      ? Math.round(enteredUsdtAmount * effectiveRate)
-      : null;
-  const finalRwfPreview =
-    effectiveRate != null && priceBreakdown?.finalPriceUsd != null
-      ? Math.round(priceBreakdown.finalPriceUsd * effectiveRate)
-      : null;
   const selectablePricingRules = useMemo(
     () =>
       selectableListingPricingRules(
@@ -243,8 +225,8 @@ export function ListingFormDialog({
 
     const hasPriceInput =
       sellerType === 'UZA_RWANDA_STOCK'
-        ? (basePriceUsd ?? 0) > 0
-        : (fobPriceUsd ?? 0) > 0;
+        ? (basePriceRwf ?? 0) > 0
+        : (fobPriceRwf ?? 0) > 0;
 
     if (!hasPriceInput) {
       setPriceBreakdown(null);
@@ -257,8 +239,8 @@ export function ListingFormDialog({
         sellerType,
         originCountry: country,
         pricingRuleId,
-        basePriceUsd,
-        fobPriceUsd,
+        basePriceRwf,
+        fobPriceRwf,
       })
         .then(setPriceBreakdown)
         .catch(() => setPriceBreakdown(null))
@@ -266,7 +248,7 @@ export function ListingFormDialog({
     }, 400);
 
     return () => window.clearTimeout(timer);
-  }, [open, sellerType, country, pricingRuleId, basePriceUsd, fobPriceUsd]);
+  }, [open, sellerType, country, pricingRuleId, basePriceRwf, fobPriceRwf]);
 
   useEffect(() => {
     if (!open) return;
@@ -1001,48 +983,38 @@ export function ListingFormDialog({
 
           {sellerType === 'UZA_RWANDA_STOCK' ? (
             <div className="space-y-1.5">
-              <Label htmlFor="base-price">Base price (USDT)</Label>
+              <Label htmlFor="base-price">Base price (Rwf)</Label>
               <NumberInput
                 id="base-price"
                 min={0}
-                step="0.01"
-                {...form.register('basePriceUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('basePriceRwf', numberRegisterOptions())}
               />
-              {enteredRwfPreview != null ? (
-                <p className="text-xs text-muted-foreground">
-                  ≈ {formatRwf(enteredRwfPreview)} (effective rate incl. markup)
-                </p>
-              ) : null}
-              {form.formState.errors.basePriceUsd ? (
+              {form.formState.errors.basePriceRwf ? (
                 <p className="text-sm text-destructive">
-                  {form.formState.errors.basePriceUsd.message}
+                  {form.formState.errors.basePriceRwf.message}
                 </p>
               ) : null}
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label htmlFor="fob-price">FOB price (USDT)</Label>
+              <Label htmlFor="fob-price">FOB price (Rwf)</Label>
               <NumberInput
                 id="fob-price"
                 min={0}
-                step="0.01"
-                {...form.register('fobPriceUsd', numberRegisterOptions())}
+                step="1"
+                {...form.register('fobPriceRwf', numberRegisterOptions())}
               />
-              {enteredRwfPreview != null ? (
-                <p className="text-xs text-muted-foreground">
-                  ≈ {formatRwf(enteredRwfPreview)} (effective rate incl. markup)
-                </p>
-              ) : null}
-              {form.formState.errors.fobPriceUsd ? (
+              {form.formState.errors.fobPriceRwf ? (
                 <p className="text-sm text-destructive">
-                  {form.formState.errors.fobPriceUsd.message}
+                  {form.formState.errors.fobPriceRwf.message}
                 </p>
               ) : null}
             </div>
           )}
-          {finalRwfPreview != null ? (
+          {priceBreakdown?.finalPriceRwf != null ? (
             <p className="text-xs text-muted-foreground">
-              Calculated customer price ≈ {formatRwf(finalRwfPreview)}
+              Calculated customer price {formatRwf(priceBreakdown.finalPriceRwf)}
             </p>
           ) : null}
 

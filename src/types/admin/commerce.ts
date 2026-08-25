@@ -78,6 +78,8 @@ export type AdminPayment = {
     invoiceNumber: string;
     paymentReference: string;
     totalAmountUsd: number;
+    totalAmountRwf?: number | null;
+    currency?: string;
     status: InvoiceStatus;
     buyerName: string;
     buyerEmail: string | null;
@@ -105,6 +107,7 @@ export type AdminInvoice = {
   vehicleModel: string | null;
   listingTitle?: string | null;
   totalAmountUsd: number;
+  totalAmountRwf?: number | null;
   currency: string;
   paymentDeadline: string | null;
   validUntil: string | null;
@@ -207,6 +210,8 @@ export type AdminOrder = {
     invoiceNumber: string;
     paymentReference: string;
     totalAmountUsd: number;
+    totalAmountRwf?: number | null;
+    currency?: string;
   };
   user?: {
     id: string;
@@ -257,6 +262,8 @@ export type AdminFinancingRequest = {
     id: string;
     invoiceNumber: string;
     totalAmountUsd: number;
+    totalAmountRwf?: number | null;
+    currency?: string;
     status: InvoiceStatus;
   } | null;
   user: {

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/number-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { formatUsd } from '@/lib/admin/format';
+import { formatListingPrice, listingDisplayRwf } from '@/lib/admin/format';
 import { useAdminListings } from '@/queries/admin';
 import { useAdminBuyers, useCreateFleetInvoice } from '@/queries/commerce';
 import {
@@ -46,14 +46,14 @@ function buyerToOption(buyer: AdminBuyer): SearchablePickerOption {
 }
 
 function listingToOption(listing: AdminListing): SearchablePickerOption {
-  const price = listing.listingPricing?.finalPriceUsd;
+  const price = formatListingPrice(listing.listingPricing);
   return {
     value: listing.id,
     label: listing.listingTitle,
     hint: [
       `${listing.brand} ${listing.model}`,
       listing.manufacturingYear,
-      price != null ? formatUsd(price) : null,
+      price !== '—' ? price : null,
     ]
       .filter(Boolean)
       .join(' · '),
@@ -104,7 +104,7 @@ export function FleetInvoiceFormDialog({
     defaultValues: {
       userId: '',
       listingId: '',
-      totalAmountUsd: 0,
+      totalAmountRwf: 0,
       notes: '',
     },
   });
@@ -121,7 +121,7 @@ export function FleetInvoiceFormDialog({
     form.reset({
       userId: '',
       listingId: '',
-      totalAmountUsd: 0,
+      totalAmountRwf: 0,
       notes: '',
     });
   }, [open, form]);
@@ -145,9 +145,9 @@ export function FleetInvoiceFormDialog({
     );
     if (match) {
       setSelectedListing(match);
-      const price = match.listingPricing?.finalPriceUsd;
+      const price = listingDisplayRwf(match.listingPricing);
       if (price != null && price > 0) {
-        form.setValue('totalAmountUsd', price);
+        form.setValue('totalAmountRwf', price);
       }
     }
   }, [listingId, listingsData?.items, form]);
@@ -263,16 +263,16 @@ export function FleetInvoiceFormDialog({
           ) : null}
 
           <div className="space-y-1.5">
-            <Label htmlFor="fleet-usd">Total (USD)</Label>
+            <Label htmlFor="fleet-rwf">Total (Rwf)</Label>
             <NumberInput
-              id="fleet-usd"
-              min={0}
-              step="0.01"
-              {...form.register('totalAmountUsd', numberRegisterOptions())}
+              id="fleet-rwf"
+              min={1}
+              step="1"
+              {...form.register('totalAmountRwf', numberRegisterOptions())}
             />
-            {form.formState.errors.totalAmountUsd ? (
+            {form.formState.errors.totalAmountRwf ? (
               <p className="text-sm text-destructive">
-                {form.formState.errors.totalAmountUsd.message}
+                {form.formState.errors.totalAmountRwf.message}
               </p>
             ) : null}
           </div>

@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/permissions';
-import { formatUsd } from '@/lib/admin/format';
+import { formatBookingFee } from '@/lib/admin/format';
 import { useAdminBookings } from '@/queries/bookings';
 import type { AdminVehicleBooking } from '@/types/admin/bookings';
 
@@ -59,7 +59,7 @@ export function AdminBookingsPanel() {
                 {booking.listing?.listingTitle ?? booking.bookingNumber}
               </p>
               <p className="text-sm text-muted-foreground">
-                {booking.bookingNumber} · {formatUsd(booking.bookingFeeUsd)}
+                {booking.bookingNumber} · {formatBookingFee(booking)}
               </p>
               <p className="text-xs text-muted-foreground">
                 Ref: {booking.paymentReference}

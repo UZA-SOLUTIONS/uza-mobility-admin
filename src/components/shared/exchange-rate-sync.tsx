@@ -5,8 +5,8 @@ import { setUsdToRwfEffective } from '@/lib/admin/format';
 import { useExchangeRate } from '@/queries/platform-settings';
 
 /**
- * Syncs the public FX rate into formatUsd() and remounts children once when the
- * rate first arrives so existing money call sites re-render with dual currency.
+ * Loads the frozen leftover-USD display rate so listing/invoice helpers can
+ * convert untouched USD rows to Rwf.
  */
 export function ExchangeRateSync({ children }: { children: ReactNode }) {
   const { data, isFetched } = useExchangeRate();

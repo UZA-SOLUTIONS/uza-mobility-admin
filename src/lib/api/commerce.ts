@@ -126,7 +126,7 @@ export function buildFleetInvoicePayload(
   return {
     userId: buyer.id,
     buyerName,
-    totalAmountUsd: body.totalAmountUsd,
+    totalAmountRwf: body.totalAmountRwf,
     buyerEmail: buyer.email,
     buyerPhone: buyer.phone ?? undefined,
     buyerAddress: buyer.buyerProfile?.address ?? undefined,

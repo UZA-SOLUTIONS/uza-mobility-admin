@@ -11,6 +11,7 @@ import {
   RWANDA_STOCK_DELIVERY_DAYS,
 } from '@/schemas/admin';
 import { parseListingPricingRuleId } from '@/lib/admin/listing-pricing';
+import { usdtToRwf } from '@/lib/admin/format';
 import type { AdminListing } from '@/types/admin/marketplace';
 
 function parseEnumValue<T extends readonly string[]>(
@@ -118,23 +119,33 @@ export function adminListingToFormValues(
     grossVehicleWeightKg: listing.evSpecs?.grossVehicleWeightKg ?? undefined,
     pricingRuleId:
       parseListingPricingRuleId(listing.listingPricing?.priceNotes) ?? '',
-    // Rwanda stock uses base; China uses FOB. After China→Kigali transit, older rows
-    // may only have FOB/final until pricing is migrated — fall back so the edit form isn't blank.
-    basePriceUsd:
-      listing.listingPricing?.basePriceUsd ??
+    basePriceRwf:
+      listing.listingPricing?.basePriceRwf ??
       (sellerType === 'UZA_RWANDA_STOCK'
-        ? (listing.listingPricing?.finalPriceUsd ??
-          listing.listingPricing?.fobPriceUsd ??
+        ? (listing.listingPricing?.finalPriceRwf ??
+          listing.listingPricing?.displayPriceRwf ??
+          usdtToRwf(
+            listing.listingPricing?.basePriceUsd ??
+              listing.listingPricing?.finalPriceUsd ??
+              listing.listingPricing?.fobPriceUsd,
+          ) ??
           undefined)
         : undefined),
-    fobPriceUsd:
-      listing.listingPricing?.fobPriceUsd ??
+    fobPriceRwf:
+      listing.listingPricing?.fobPriceRwf ??
       (sellerType === 'UZA_CHINA_SOURCING'
-        ? (listing.listingPricing?.basePriceUsd ??
-          listing.listingPricing?.finalPriceUsd ??
+        ? (listing.listingPricing?.finalPriceRwf ??
+          usdtToRwf(
+            listing.listingPricing?.fobPriceUsd ??
+              listing.listingPricing?.basePriceUsd ??
+              listing.listingPricing?.finalPriceUsd,
+          ) ??
           undefined)
         : undefined),
-    discountUsd: listing.listingPricing?.discountUsd ?? undefined,
+    discountRwf:
+      listing.listingPricing?.discountRwf ??
+      usdtToRwf(listing.listingPricing?.discountUsd) ??
+      undefined,
     status: listing.status,
   };
 }

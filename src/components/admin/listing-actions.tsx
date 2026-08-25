@@ -85,7 +85,8 @@ export function ListingActions({
   const needsRwandaChannelSync =
     currentStage === 'KIGALI_STOCK' &&
     (listing.sellerType === 'UZA_CHINA_SOURCING' ||
-      listing.listingPricing?.basePriceUsd == null);
+      (listing.listingPricing?.basePriceRwf == null &&
+        listing.listingPricing?.basePriceUsd == null));
 
   const busy =
     approve.isPending ||
@@ -277,7 +278,7 @@ export function ListingActions({
               currentStage === 'KIGALI_STOCK'
               ? listing.sellerType === 'UZA_CHINA_SOURCING'
                 ? `This listing is already in Kigali but still marked as China sourcing. Update the channel to Rwanda stock and migrate FOB pricing into a Rwanda base price (buyer list price stays the same).`
-                : `This Kigali listing is missing a Rwanda base price (common after China transit). Migrate from FOB/final into basePriceUsd so edit/view show the correct field.`
+                : `This Kigali listing is missing a Rwanda base price (common after China transit). Migrate from FOB/final into a Rwanda Rwf base price so edit/view show the correct field.`
               : stageConfirm.direction === 'back'
                 ? `Move "${listing.listingTitle}" from ${INVENTORY_STAGE_LABEL[currentStage]} back to ${INVENTORY_STAGE_LABEL[stageConfirm.stage]}? This can change the listing channel and location shown to buyers.`
                 : `Move "${listing.listingTitle}" from ${INVENTORY_STAGE_LABEL[currentStage]} to ${INVENTORY_STAGE_LABEL[stageConfirm.stage]}?`

@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { formatDate, formatUsd } from '@/lib/admin/format';
+import { formatDate, formatInvoiceTotal } from '@/lib/admin/format';
 import { useAdminInvoices } from '@/queries/commerce';
 import {
   invoiceStatuses,
@@ -170,7 +170,7 @@ export function AdminInvoicesPanel() {
                         {invoice.buyerEmail ?? '—'}
                       </div>
                     </TableCell>
-                    <TableCell>{formatUsd(invoice.totalAmountUsd)}</TableCell>
+                    <TableCell>{formatInvoiceTotal(invoice)}</TableCell>
                     <TableCell>
                       <StatusBadge status={invoice.status} />
                     </TableCell>
