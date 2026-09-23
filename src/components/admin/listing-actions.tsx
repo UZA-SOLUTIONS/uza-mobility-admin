@@ -21,6 +21,8 @@ import {
   usePublishListing,
   useRejectListing,
   useUnpublishListing,
+  useMarkListingSold,
+  useUnmarkListingSold,
   useAdvanceListingInventoryStage,
 } from '@/queries/admin';
 import type { AdminListing } from '@/types/admin/marketplace';
@@ -64,6 +66,8 @@ export function ListingActions({
   const approve = useApproveListing();
   const publish = usePublishListing();
   const unpublish = useUnpublishListing();
+  const markSold = useMarkListingSold();
+  const unmarkSold = useUnmarkListingSold();
   const reject = useRejectListing();
   const feature = useFeatureListing();
   const hotDeal = useHotDealListing();
@@ -71,6 +75,8 @@ export function ListingActions({
   const advanceStage = useAdvanceListingInventoryStage();
   const [rejectOpen, setRejectOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [soldConfirmOpen, setSoldConfirmOpen] = useState(false);
+  const [unsoldConfirmOpen, setUnsoldConfirmOpen] = useState(false);
   const [stageConfirm, setStageConfirm] = useState<{
     stage: InventoryStage;
     direction: 'forward' | 'back';
@@ -92,6 +98,8 @@ export function ListingActions({
     approve.isPending ||
     publish.isPending ||
     unpublish.isPending ||
+    markSold.isPending ||
+    unmarkSold.isPending ||
     reject.isPending ||
     feature.isPending ||
     hotDeal.isPending ||
@@ -213,6 +221,26 @@ export function ListingActions({
             Unpublish
           </Button>
         ) : null}
+        {(listing.status === 'PUBLISHED' || listing.status === 'RESERVED') &&
+        canApprove ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => setSoldConfirmOpen(true)}
+          >
+            Mark as sold
+          </Button>
+        ) : null}
+        {listing.status === 'SOLD' && canApprove ? (
+          <Button
+            size="sm"
+            disabled={busy}
+            onClick={() => setUnsoldConfirmOpen(true)}
+          >
+            Put back on sale
+          </Button>
+        ) : null}
         {(listing.status === 'PENDING_REVIEW' ||
           listing.status === 'APPROVED') &&
         canApprove ? (
@@ -297,6 +325,40 @@ export function ListingActions({
         variant={stageConfirm?.direction === 'back' ? 'destructive' : 'default'}
         loading={advanceStage.isPending}
         onConfirm={confirmStageMove}
+      />
+
+      <ConfirmDialog
+        open={soldConfirmOpen}
+        onOpenChange={setSoldConfirmOpen}
+        title="Mark this vehicle as sold?"
+        description={`"${listing.listingTitle}" will stay visible to buyers with a Sold mark. They will not be able to buy, book, or inquire.`}
+        confirmLabel="Yes, mark as sold"
+        loading={markSold.isPending}
+        onConfirm={() =>
+          markSold.mutate(listing.id, {
+            onSuccess: () => {
+              setSoldConfirmOpen(false);
+              onSuccess();
+            },
+          })
+        }
+      />
+
+      <ConfirmDialog
+        open={unsoldConfirmOpen}
+        onOpenChange={setUnsoldConfirmOpen}
+        title="Put this vehicle back on sale?"
+        description={`"${listing.listingTitle}" will be available to buy, book, and inquire again. The Sold mark will be removed.`}
+        confirmLabel="Yes, put back on sale"
+        loading={unmarkSold.isPending}
+        onConfirm={() =>
+          unmarkSold.mutate(listing.id, {
+            onSuccess: () => {
+              setUnsoldConfirmOpen(false);
+              onSuccess();
+            },
+          })
+        }
       />
 
       <ConfirmDialog

@@ -224,6 +224,18 @@ export function unpublishListing(id: string) {
   });
 }
 
+export function markListingSold(id: string) {
+  return authenticatedFetch<AdminListing>(`/admin/listings/${id}/sold`, {
+    method: 'PATCH',
+  });
+}
+
+export function unmarkListingSold(id: string) {
+  return authenticatedFetch<AdminListing>(`/admin/listings/${id}/unsold`, {
+    method: 'PATCH',
+  });
+}
+
 export function advanceListingInventoryStage(
   id: string,
   stage: NonNullable<AdminListing['inventoryStage']>,

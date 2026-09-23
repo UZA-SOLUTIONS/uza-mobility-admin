@@ -29,6 +29,8 @@ import {
   hotDealListing,
   publishListing,
   unpublishListing,
+  markListingSold,
+  unmarkListingSold,
   reactivateSeller,
   rejectAdminOperator,
   rejectAdminStation,
@@ -244,6 +246,32 @@ export function useUnpublishListing() {
     mutationFn: unpublishListing,
     onSuccess: () => {
       toast.success('Listing unpublished');
+      invalidateListingQueries(queryClient);
+    },
+    onError: (error) => toast.error(mutationError(error)),
+  });
+}
+
+export function useMarkListingSold() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markListingSold,
+    onSuccess: () => {
+      toast.success('Listing marked as sold');
+      invalidateListingQueries(queryClient);
+    },
+    onError: (error) => toast.error(mutationError(error)),
+  });
+}
+
+export function useUnmarkListingSold() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: unmarkListingSold,
+    onSuccess: () => {
+      toast.success('Listing put back on sale');
       invalidateListingQueries(queryClient);
     },
     onError: (error) => toast.error(mutationError(error)),
