@@ -18,6 +18,8 @@ import { PricingBreakdown } from '@/components/shared/pricing-breakdown';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
+import { marketplaceVehicleUrl } from '@/lib/marketplace-url';
+import { cn } from '@/lib/utils';
 import type { AdminListing } from '@/types/admin/marketplace';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,8 +64,10 @@ export function ListingDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={`${adminDetailSheetClassName} overflow-y-auto`}>
-        <SheetHeader className="border-b px-6 py-5">
+      <SheetContent
+        className={cn(adminDetailSheetClassName, 'overflow-hidden')}
+      >
+        <SheetHeader className="shrink-0 space-y-1 border-b px-6 py-5 text-left">
           <SheetTitle className="text-xl">{listing.listingTitle}</SheetTitle>
           <SheetDescription>
             {listing.brand} {listing.model}
@@ -72,7 +76,7 @@ export function ListingDetailSheet({
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6 px-6 py-6">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-6">
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={listing.status} />
             <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
@@ -131,6 +135,26 @@ export function ListingDetailSheet({
 
           <DetailSection title="Overview">
             <DetailRow label="Slug" value={listing.slug} />
+            <DetailRow
+              label="Marketplace"
+              value={(() => {
+                const href = listing.slug
+                  ? marketplaceVehicleUrl(listing.slug)
+                  : null;
+                return href ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    View on marketplace
+                  </a>
+                ) : (
+                  '—'
+                );
+              })()}
+            />
             <DetailRow
               label="Verification"
               value={formatEnumLabel(listing.verificationLevel)}
@@ -448,6 +472,9 @@ export function ListingDetailSheet({
             </div>
           ) : null}
 
+        </div>
+
+        <div className="shrink-0 space-y-3 border-t px-6 py-4">
           {showEdit ? (
             <Button
               type="button"
@@ -458,8 +485,7 @@ export function ListingDetailSheet({
               Edit listing
             </Button>
           ) : null}
-
-          <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+          <div className="space-y-3">
             <p className="text-sm font-medium">Actions</p>
             <ListingActions
               listing={listing}

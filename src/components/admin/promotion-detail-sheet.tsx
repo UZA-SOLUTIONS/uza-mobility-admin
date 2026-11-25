@@ -3,21 +3,14 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { PromotionListingAttach } from '@/components/admin/promotion-listing-attach';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { isListingDiscountType } from '@/lib/admin/promotion-config';
 import { formatDate, formatUsd } from '@/lib/admin/format';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useActivatePromotion,
   useAdminPromotion,
@@ -73,184 +66,179 @@ export function PromotionDetailSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className={adminDetailSheetClassName}>
-          {isLoading ? (
-            <div className="space-y-4 px-6 py-6">
-              <Skeleton className="h-8 w-2/3" />
-              <Skeleton className="h-24 w-full" />
+      <AdminDetailSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={promotion?.name ?? 'Promotion details'}
+        description={
+          promotion
+            ? `${promotion.type.replaceAll('_', ' ')} · ${formatDate(promotion.startDate)} – ${formatDate(promotion.endDate)}`
+            : undefined
+        }
+      >
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : null}
+
+        {isError ? (
+          <p className="text-sm text-destructive">
+            {error instanceof Error
+              ? error.message
+              : 'Failed to load promotion.'}
+          </p>
+        ) : null}
+
+        {promotion && !isLoading ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge
+                status={
+                  promotion.isActive
+                    ? 'ACTIVE'
+                    : promotionEnded
+                      ? 'EXPIRED'
+                      : 'CANCELLED'
+                }
+              />
+              <span className="text-sm text-muted-foreground">
+                {linked.length} listing{linked.length === 1 ? '' : 's'} attached
+              </span>
             </div>
-          ) : null}
 
-          {isError ? (
-            <p className="px-6 py-6 text-sm text-destructive">
-              {error instanceof Error
-                ? error.message
-                : 'Failed to load promotion.'}
-            </p>
-          ) : null}
+            {(focusAttach || needsListings) && can('promotions:manage') ? (
+              <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
+                Attach at least one listing below so this offer applies on the
+                marketplace.
+              </p>
+            ) : null}
 
-          {promotion && !isLoading ? (
-            <>
-              <SheetHeader className="border-b px-6 py-5">
-                <SheetTitle className="text-xl">{promotion.name}</SheetTitle>
-                <SheetDescription>
-                  {promotion.type.replaceAll('_', ' ')} ·{' '}
-                  {formatDate(promotion.startDate)} –{' '}
-                  {formatDate(promotion.endDate)}
-                </SheetDescription>
-              </SheetHeader>
+            {promotion.bannerImageUrl ? (
+              <div className="relative aspect-[3/1] w-full overflow-hidden rounded-lg border">
+                <Image
+                  src={promotion.bannerImageUrl}
+                  alt=""
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : null}
 
-              <div className="space-y-6 px-6 py-6">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge
-                    status={
-                      promotion.isActive
-                        ? 'ACTIVE'
-                        : promotionEnded
-                          ? 'EXPIRED'
-                          : 'CANCELLED'
-                    }
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {linked.length} listing{linked.length === 1 ? '' : 's'}{' '}
-                    attached
-                  </span>
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              {promotion.discountAmountUsd != null ? (
+                <div>
+                  <dt className="text-muted-foreground">Discount</dt>
+                  <dd>{formatUsd(promotion.discountAmountUsd)}</dd>
                 </div>
+              ) : null}
+              {promotion.discountPercent != null ? (
+                <div>
+                  <dt className="text-muted-foreground">Discount %</dt>
+                  <dd>{promotion.discountPercent}%</dd>
+                </div>
+              ) : null}
+              {promotion.bannerPlacement ? (
+                <div>
+                  <dt className="text-muted-foreground">Placement</dt>
+                  <dd>{promotion.bannerPlacement.replaceAll('_', ' ')}</dd>
+                </div>
+              ) : null}
+              {promotion.clickUrl ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-muted-foreground">Partner link</dt>
+                  <dd className="break-all">{promotion.clickUrl}</dd>
+                </div>
+              ) : null}
+            </dl>
 
-                {(focusAttach || needsListings) && can('promotions:manage') ? (
-                  <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-200">
-                    Attach at least one listing below so this offer applies on
-                    the marketplace.
-                  </p>
-                ) : null}
-
-                {promotion.bannerImageUrl ? (
-                  <div className="relative aspect-[3/1] w-full overflow-hidden rounded-lg border">
-                    <Image
-                      src={promotion.bannerImageUrl}
-                      alt=""
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : null}
-
-                <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                  {promotion.discountAmountUsd != null ? (
-                    <div>
-                      <dt className="text-muted-foreground">Discount</dt>
-                      <dd>{formatUsd(promotion.discountAmountUsd)}</dd>
-                    </div>
-                  ) : null}
-                  {promotion.discountPercent != null ? (
-                    <div>
-                      <dt className="text-muted-foreground">Discount %</dt>
-                      <dd>{promotion.discountPercent}%</dd>
-                    </div>
-                  ) : null}
-                  {promotion.bannerPlacement ? (
-                    <div>
-                      <dt className="text-muted-foreground">Placement</dt>
-                      <dd>{promotion.bannerPlacement.replaceAll('_', ' ')}</dd>
-                    </div>
-                  ) : null}
-                  {promotion.clickUrl ? (
-                    <div className="sm:col-span-2">
-                      <dt className="text-muted-foreground">Partner link</dt>
-                      <dd className="break-all">{promotion.clickUrl}</dd>
-                    </div>
-                  ) : null}
-                </dl>
-
-                {can('promotions:manage') ? (
-                  <div className="flex flex-wrap gap-2">
+            {can('promotions:manage') ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(promotion)}
+                >
+                  Edit
+                </Button>
+                {promotion.isActive ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => setDeactivateOpen(true)}
+                  >
+                    Deactivate
+                  </Button>
+                ) : (
+                  <>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => onEdit(promotion)}
+                      disabled={busy || promotionEnded}
+                      onClick={() => setActivateOpen(true)}
                     >
-                      Edit
+                      Reactivate
                     </Button>
-                    {promotion.isActive ? (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={busy}
-                        onClick={() => setDeactivateOpen(true)}
-                      >
-                        Deactivate
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={busy || promotionEnded}
-                          onClick={() => setActivateOpen(true)}
-                        >
-                          Reactivate
-                        </Button>
-                        {promotionEnded ? (
-                          <p className="w-full text-xs text-muted-foreground">
-                            This campaign has ended. Edit the promotion and
-                            extend the end date before reactivating.
-                          </p>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                ) : null}
-
-                {linked.length > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Attached listings</p>
-                    <ul className="divide-y rounded-lg border text-sm">
-                      {linked.map((row) => (
-                        <li
-                          key={row.listing.id}
-                          className="flex items-center justify-between gap-2 px-3 py-2"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate font-medium">
-                              {row.listing.listingTitle}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {row.listing.status.replaceAll('_', ' ')}
-                            </p>
-                          </div>
-                          {can('promotions:manage') ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              disabled={busy}
-                              onClick={() => handleDetach(row.listing.id)}
-                            >
-                              Detach
-                            </Button>
-                          ) : null}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No listings attached yet.
-                  </p>
+                    {promotionEnded ? (
+                      <p className="w-full text-xs text-muted-foreground">
+                        This campaign has ended. Edit the promotion and extend
+                        the end date before reactivating.
+                      </p>
+                    ) : null}
+                  </>
                 )}
-
-                {can('promotions:manage') ? (
-                  <PromotionListingAttach
-                    promotionId={promotion.id}
-                    promotionType={promotion.type}
-                    attachedListingIds={attachedIds}
-                  />
-                ) : null}
               </div>
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+            ) : null}
+
+            {linked.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Attached listings</p>
+                <ul className="divide-y rounded-lg border text-sm">
+                  {linked.map((row) => (
+                    <li
+                      key={row.listing.id}
+                      className="flex items-center justify-between gap-2 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">
+                          {row.listing.listingTitle}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.listing.status.replaceAll('_', ' ')}
+                        </p>
+                      </div>
+                      {can('promotions:manage') ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => handleDetach(row.listing.id)}
+                        >
+                          Detach
+                        </Button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No listings attached yet.
+              </p>
+            )}
+
+            {can('promotions:manage') ? (
+              <PromotionListingAttach
+                promotionId={promotion.id}
+                promotionType={promotion.type}
+                attachedListingIds={attachedIds}
+              />
+            ) : null}
+          </>
+        ) : null}
+      </AdminDetailSheet>
 
       <ConfirmDialog
         open={deactivateOpen}

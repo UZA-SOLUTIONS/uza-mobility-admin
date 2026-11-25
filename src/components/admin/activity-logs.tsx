@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { SuperAdminGate } from '@/components/admin/super-admin-gate';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { DatePickerField } from '@/components/ui/date-picker-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -28,7 +31,12 @@ function metadataPreview(metadata: Record<string, unknown> | null) {
     (metadata.performerEmail as string) ||
     (metadata.targetEmail as string);
   if (email) return email;
-  return JSON.stringify(metadata).slice(0, 80);
+  try {
+    const text = JSON.stringify(metadata, null, 0);
+    return text.length > 96 ? `${text.slice(0, 96)}…` : text;
+  } catch {
+    return '—';
+  }
 }
 
 export function AdminActivityLogsPanel() {
@@ -60,7 +68,7 @@ export function AdminActivityLogsPanel() {
           description="Platform audit trail — logins, role changes, and admin actions."
         />
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end">
+        <AdminFiltersBar className="lg:flex-row lg:flex-wrap lg:items-end">
           <div className="space-y-1.5">
             <Label htmlFor="log-email">Email</Label>
             <Input
@@ -122,14 +130,16 @@ export function AdminActivityLogsPanel() {
           <Button type="button" variant="secondary" onClick={applyFilters}>
             Apply filters
           </Button>
-        </div>
+        </AdminFiltersBar>
 
         {isError ? (
-          <p className="text-sm text-destructive">
-            {error instanceof Error
-              ? error.message
-              : 'Failed to load activity logs.'}
-          </p>
+          <AdminErrorState
+            message={
+              error instanceof Error
+                ? error.message
+                : 'Failed to load activity logs.'
+            }
+          />
         ) : null}
 
         <div className="rounded-lg border">
@@ -144,24 +154,15 @@ export function AdminActivityLogsPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}>
-                        <Skeleton className="h-8 w-full" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : null}
+              {isLoading ? (
+                <AdminTableSkeletonRows columns={5} rows={6} />
+              ) : null}
               {data?.items.length === 0 && !isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    No activity logs match your filters.
-                  </TableCell>
-                </TableRow>
+                <AdminTableEmpty
+                  colSpan={5}
+                  title="No activity logs match your filters"
+                  description="Try different email, action, entity, or date filters."
+                />
               ) : null}
               {data?.items.map((log) => (
                 <TableRow key={log.id}>
@@ -172,8 +173,10 @@ export function AdminActivityLogsPanel() {
                     {log.action}
                   </TableCell>
                   <TableCell>{log.entity}</TableCell>
-                  <TableCell className="max-w-[240px] truncate text-sm text-muted-foreground">
-                    {metadataPreview(log.metadata)}
+                  <TableCell className="max-w-[280px]">
+                    <code className="block truncate rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                      {metadataPreview(log.metadata)}
+                    </code>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {log.ipAddress ?? '—'}

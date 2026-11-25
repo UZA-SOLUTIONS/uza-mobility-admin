@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BookingDetailSheet } from '@/components/admin/booking-detail-sheet';
 import { EditBookingFeeDialog } from '@/components/admin/edit-booking-fee-dialog';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
@@ -43,9 +44,11 @@ export function AdminBookingsPanel() {
       ) : null}
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load bookings.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error ? error.message : 'Failed to load bookings.'
+          }
+        />
       ) : null}
 
       <div className="space-y-3">
@@ -92,7 +95,9 @@ export function AdminBookingsPanel() {
           </div>
         ))}
         {!isLoading && (data?.items.length ?? 0) === 0 ? (
-          <p className="text-sm text-muted-foreground">No bookings yet.</p>
+          <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            No bookings yet.
+          </p>
         ) : null}
       </div>
 

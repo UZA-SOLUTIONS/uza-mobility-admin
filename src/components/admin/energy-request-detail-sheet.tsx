@@ -1,6 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
+import {
+  DetailRow,
+  DetailSection,
+} from '@/components/admin/shared/detail-fields';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -11,16 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDateTime } from '@/lib/admin/format';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { useUpdateEnergyRequestStatus } from '@/queries/operations';
 import {
   energyRequestStatuses,
@@ -33,6 +30,15 @@ type EnergyRequestDetailSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
+
+function solarFleetSiteVisit(request: EnergyRequest) {
+  const parts = [
+    request.solarSupportNeeded ? 'Solar' : '',
+    request.fleetUse ? 'Fleet' : '',
+    request.siteVisitRequested ? 'Site visit' : '',
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(' · ') : '—';
+}
 
 export function EnergyRequestDetailSheet({
   request,
@@ -59,107 +65,89 @@ export function EnergyRequestDetailSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={adminDetailSheetClassName}>
-        {request ? (
-          <>
-            <SheetHeader>
-              <SheetTitle>{request.contactName}</SheetTitle>
-              <SheetDescription>
-                Energy quote request · {request.phone}
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="mt-6 space-y-6">
-              <StatusBadge status={request.status} />
-
-              <dl className="grid gap-3 text-sm">
-                <div>
-                  <dt className="text-muted-foreground">Email</dt>
-                  <dd>{request.email ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Location</dt>
-                  <dd>
-                    {[request.city, request.location]
-                      .filter(Boolean)
-                      .join(', ') || '—'}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Client type</dt>
-                  <dd>{request.clientType?.replaceAll('_', ' ') ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">EVs</dt>
-                  <dd>{request.numberOfEvs ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Product</dt>
-                  <dd>{request.chargingProduct?.name ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">
-                    Solar / fleet / site visit
-                  </dt>
-                  <dd>
-                    {request.solarSupportNeeded ? 'Solar' : ''}
-                    {request.fleetUse ? ' · Fleet' : ''}
-                    {request.siteVisitRequested ? ' · Site visit' : ''}
-                    {!request.solarSupportNeeded &&
-                    !request.fleetUse &&
-                    !request.siteVisitRequested
-                      ? '—'
-                      : ''}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Submitted</dt>
-                  <dd>{formatDateTime(request.createdAt)}</dd>
-                </div>
-              </dl>
-
-              {request.notes ? (
-                <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                  {request.notes}
-                </p>
-              ) : null}
-
-              {canUpdate ? (
-                <div className="space-y-3 rounded-lg border p-4">
-                  <p className="text-sm font-medium">Update status</p>
-                  <div className="space-y-1.5">
-                    <Label>New status</Label>
-                    <Select
-                      value={nextStatus}
-                      onValueChange={(v) =>
-                        setNextStatus(v as EnergyRequestStatus)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {energyRequestStatuses.map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {status.replaceAll('_', ' ')}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button
-                    disabled={!nextStatus || updateStatus.isPending}
-                    onClick={saveStatus}
-                  >
-                    {updateStatus.isPending ? 'Saving…' : 'Save status'}
-                  </Button>
-                </div>
-              ) : null}
+    <AdminDetailSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={request?.contactName ?? 'Energy request'}
+      description={
+        request
+          ? `Energy quote request · ${request.phone}`
+          : undefined
+      }
+      footer={
+        canUpdate && request ? (
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Update status</p>
+            <div className="space-y-1.5">
+              <Label>New status</Label>
+              <Select
+                value={nextStatus}
+                onValueChange={(v) => setNextStatus(v as EnergyRequestStatus)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {energyRequestStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+            <Button
+              disabled={!nextStatus || updateStatus.isPending}
+              onClick={saveStatus}
+            >
+              {updateStatus.isPending ? 'Saving…' : 'Save status'}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
+      {request ? (
+        <>
+          <StatusBadge status={request.status} />
+
+          <DetailSection title="Request details">
+            <DetailRow label="Email" value={request.email} />
+            <DetailRow
+              label="Location"
+              value={
+                [request.city, request.location].filter(Boolean).join(', ') ||
+                '—'
+              }
+            />
+            <DetailRow
+              label="Client type"
+              value={request.clientType?.replaceAll('_', ' ') ?? '—'}
+            />
+            <DetailRow label="EVs" value={request.numberOfEvs} />
+            <DetailRow
+              label="Product"
+              value={request.chargingProduct?.name ?? '—'}
+            />
+            <DetailRow
+              label="Solar / fleet / site visit"
+              value={solarFleetSiteVisit(request)}
+            />
+            <DetailRow
+              label="Submitted"
+              value={formatDateTime(request.createdAt)}
+            />
+          </DetailSection>
+
+          {request.notes ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Notes</p>
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                {request.notes}
+              </p>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </AdminDetailSheet>
   );
 }

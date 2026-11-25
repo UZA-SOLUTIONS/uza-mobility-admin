@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { InquiryDetailSheet } from '@/components/admin/inquiry-detail-sheet';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
@@ -55,9 +56,11 @@ export function AdminInquiriesPanel() {
       ) : null}
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load inquiries.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error ? error.message : 'Failed to load inquiries.'
+          }
+        />
       ) : null}
 
       <div className="space-y-3">

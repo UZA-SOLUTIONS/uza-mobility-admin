@@ -3,14 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AdminFormDialog } from '@/components/admin/shared/admin-form-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   NumberInput,
@@ -126,16 +120,31 @@ export function EnergyProductFormDialog({
     }
   });
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Edit charging product' : 'Add charging product'}
-          </DialogTitle>
-        </DialogHeader>
+  const energyProductFormId = 'energy-product-form';
 
-        <form onSubmit={onSubmit} className="space-y-4">
+  return (
+    <AdminFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit charging product' : 'Add charging product'}
+      size="sm"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={energyProductFormId} disabled={busy}>
+            {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create product'}
+          </Button>
+        </>
+      }
+    >
+      <form id={energyProductFormId} onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="ep-name">Name</Label>
             <Input id="ep-name" {...form.register('name')} />
@@ -213,21 +222,7 @@ export function EnergyProductFormDialog({
             />
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={busy}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={busy}>
-              {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create product'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </AdminFormDialog>
   );
 }

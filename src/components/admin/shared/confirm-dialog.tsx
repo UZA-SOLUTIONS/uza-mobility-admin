@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Spinner } from '@/components/ui/spinner';
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -37,7 +38,13 @@ export function ConfirmDialog({
   children,
 }: ConfirmDialogProps) {
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (loading) return;
+        onOpenChange(next);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
@@ -45,9 +52,7 @@ export function ConfirmDialog({
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>
-            {cancelLabel}
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={loading}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction
             variant={variant === 'destructive' ? 'destructive' : 'default'}
             disabled={loading}
@@ -56,7 +61,14 @@ export function ConfirmDialog({
               onConfirm();
             }}
           >
-            {confirmLabel}
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Working…
+              </span>
+            ) : (
+              confirmLabel
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

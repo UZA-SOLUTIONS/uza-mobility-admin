@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { partDisplayStatus } from '@/lib/admin/part-status';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { PartDetailSheet } from '@/components/admin/part-detail-sheet';
 import { PartFormDialog } from '@/components/admin/part-form-dialog';
@@ -13,7 +17,6 @@ import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -65,31 +68,33 @@ export function AdminPartsPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="Parts"
-          description="Create, edit, and remove parts in the marketplace catalog."
-        />
-        <Button onClick={openCreate}>New part</Button>
-      </div>
+      <PageHeader
+        title="Parts"
+        description="Create, edit, and remove parts in the marketplace catalog."
+        actions={<Button onClick={openCreate}>New part</Button>}
+      />
 
-      <div className="space-y-1.5 sm:max-w-sm">
-        <Label htmlFor="parts-search">Search</Label>
-        <Input
-          id="parts-search"
-          placeholder="Name or description…"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setFilters((current) => ({ ...current, page: 1 }));
-          }}
-        />
-      </div>
+      <AdminFiltersBar>
+        <div className="w-full space-y-1.5 sm:max-w-sm">
+          <Label htmlFor="parts-search">Search</Label>
+          <Input
+            id="parts-search"
+            placeholder="Name or description…"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setFilters((current) => ({ ...current, page: 1 }));
+            }}
+          />
+        </div>
+      </AdminFiltersBar>
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load parts.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error ? error.message : 'Failed to load parts.'
+          }
+        />
       ) : null}
 
       <div className="rounded-lg border">
@@ -107,26 +112,13 @@ export function AdminPartsPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 8 }).map((__, cell) => (
-                      <TableCell key={cell}>
-                        <Skeleton className="h-5 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : null}
+            {isLoading ? <AdminTableSkeletonRows columns={8} /> : null}
             {!isLoading && data?.items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="py-10 text-center text-muted-foreground"
-                >
-                  No parts found.
-                </TableCell>
-              </TableRow>
+              <AdminTableEmpty
+                colSpan={8}
+                title="No parts found"
+                description="Try another search, or create a new part."
+              />
             ) : null}
             {!isLoading
               ? data?.items.map((part) => (

@@ -4,12 +4,15 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { EnergyProductFormDialog } from '@/components/admin/energy-product-form-dialog';
 import { EnergyRequestDetailSheet } from '@/components/admin/energy-request-detail-sheet';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -92,11 +95,13 @@ export function AdminEnergyPanel() {
           ) : null}
 
           {products.isError ? (
-            <p className="text-sm text-destructive">
-              {products.error instanceof Error
-                ? products.error.message
-                : 'Failed to load products.'}
-            </p>
+            <AdminErrorState
+              message={
+                products.error instanceof Error
+                  ? products.error.message
+                  : 'Failed to load products.'
+              }
+            />
           ) : null}
 
           <div className="rounded-lg border">
@@ -111,24 +116,15 @@ export function AdminEnergyPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.isLoading
-                  ? Array.from({ length: 3 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell colSpan={5}>
-                          <Skeleton className="h-8 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : null}
+                {products.isLoading ? (
+                  <AdminTableSkeletonRows columns={5} rows={3} />
+                ) : null}
                 {!products.isLoading && productRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No charging products yet.
-                    </TableCell>
-                  </TableRow>
+                  <AdminTableEmpty
+                    colSpan={5}
+                    title="No charging products yet"
+                    description="Add a product to show on the public energy page."
+                  />
                 ) : null}
                 {products.data?.map((product) => {
                   const thumb =
@@ -183,41 +179,45 @@ export function AdminEnergyPanel() {
         </TabsContent>
 
         <TabsContent value="requests" className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <Label>Status</Label>
-            <Select
-              value={requestFilters.status ?? 'ALL'}
-              onValueChange={(value) =>
-                setRequestFilters((current) => ({
-                  ...current,
-                  status:
-                    value === 'ALL'
-                      ? undefined
-                      : (value as AdminEnergyRequestsFilters['status']),
-                  page: 1,
-                }))
-              }
-            >
-              <SelectTrigger className="w-[220px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All statuses</SelectItem>
-                {energyRequestStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status.replaceAll('_', ' ')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <AdminFiltersBar>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select
+                value={requestFilters.status ?? 'ALL'}
+                onValueChange={(value) =>
+                  setRequestFilters((current) => ({
+                    ...current,
+                    status:
+                      value === 'ALL'
+                        ? undefined
+                        : (value as AdminEnergyRequestsFilters['status']),
+                    page: 1,
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All statuses</SelectItem>
+                  {energyRequestStatuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status.replaceAll('_', ' ')}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </AdminFiltersBar>
 
           {requests.isError ? (
-            <p className="text-sm text-destructive">
-              {requests.error instanceof Error
-                ? requests.error.message
-                : 'Failed to load requests.'}
-            </p>
+            <AdminErrorState
+              message={
+                requests.error instanceof Error
+                  ? requests.error.message
+                  : 'Failed to load requests.'
+              }
+            />
           ) : null}
 
           <div className="rounded-lg border">
@@ -232,24 +232,15 @@ export function AdminEnergyPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {requests.isLoading
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell colSpan={5}>
-                          <Skeleton className="h-8 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : null}
+                {requests.isLoading ? (
+                  <AdminTableSkeletonRows columns={5} />
+                ) : null}
                 {!requests.isLoading && requestRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No energy requests found.
-                    </TableCell>
-                  </TableRow>
+                  <AdminTableEmpty
+                    colSpan={5}
+                    title="No energy requests found"
+                    description="Try another status filter."
+                  />
                 ) : null}
                 {requestRows.map((request) => (
                   <TableRow key={request.id}>

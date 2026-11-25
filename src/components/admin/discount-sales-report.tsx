@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -104,7 +107,7 @@ export function AdminDiscountSalesPanel() {
         description="Confirmed vehicle sales (payment verified) where a pricing-rule discount was applied."
       />
 
-      <div className="flex flex-wrap items-end gap-4">
+      <AdminFiltersBar>
         <div className="space-y-1.5">
           <Label htmlFor="discount-from">From</Label>
           <Input
@@ -133,16 +136,18 @@ export function AdminDiscountSalesPanel() {
         >
           {exporting ? 'Exporting…' : 'Export PDF'}
         </Button>
-      </div>
+      </AdminFiltersBar>
 
       <SummaryCards summary={summary} />
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error
-            ? error.message
-            : 'Failed to load discount sales.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : 'Failed to load discount sales.'
+          }
+        />
       ) : null}
 
       <div className="rounded-lg border">
@@ -159,24 +164,13 @@ export function AdminDiscountSalesPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    <TableCell colSpan={7}>
-                      <Skeleton className="h-8 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              : null}
+            {isLoading ? <AdminTableSkeletonRows columns={7} /> : null}
             {!isLoading && data?.items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  No discounted sales found for this period.
-                </TableCell>
-              </TableRow>
+              <AdminTableEmpty
+                colSpan={7}
+                title="No discounted sales for this period"
+                description="Adjust the date range and apply filters."
+              />
             ) : null}
             {data?.items.map((row) => (
               <TableRow key={row.invoiceId}>

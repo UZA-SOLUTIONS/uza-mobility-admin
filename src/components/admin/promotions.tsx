@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { PromotionDetailSheet } from '@/components/admin/promotion-detail-sheet';
 import { PromotionFormDialog } from '@/components/admin/promotion-form-dialog';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -55,18 +57,21 @@ export function AdminPromotionsPanel() {
       <PageHeader
         title="Promotions"
         description="Create campaigns, upload banners, and attach listings for discounts or homepage placement."
+        actions={
+          can('promotions:create') ? (
+            <Button onClick={openCreate}>Create promotion</Button>
+          ) : null
+        }
       />
 
-      {can('promotions:create') ? (
-        <Button onClick={openCreate}>Create promotion</Button>
-      ) : null}
-
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error
-            ? error.message
-            : 'Failed to load promotions.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : 'Failed to load promotions.'
+          }
+        />
       ) : null}
 
       <div className="rounded-lg border">
@@ -82,24 +87,13 @@ export function AdminPromotionsPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={6}>
-                      <Skeleton className="h-8 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              : null}
-            {data?.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  No promotions yet.
-                </TableCell>
-              </TableRow>
+            {isLoading ? <AdminTableSkeletonRows columns={6} rows={4} /> : null}
+            {data?.length === 0 && !isLoading ? (
+              <AdminTableEmpty
+                colSpan={6}
+                title="No promotions yet"
+                description="Create a campaign to attach listings or homepage banners."
+              />
             ) : null}
             {data?.map((promotion) => (
               <TableRow key={promotion.id}>

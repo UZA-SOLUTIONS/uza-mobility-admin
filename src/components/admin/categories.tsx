@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AdminFormDialog } from '@/components/admin/shared/admin-form-dialog';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
 import { usePermissions } from '@/hooks/permissions';
 import { PageHeader } from '@/components/shared/page-header';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +32,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -356,21 +351,13 @@ function CategoryCard({ category }: CategoryCardProps) {
         loading={updateSub.isPending}
       />
 
-      <Dialog open={subOpen} onOpenChange={setSubOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add subcategory</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>Name</Label>
-              <Input
-                value={subName}
-                onChange={(e) => setSubName(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
+      <AdminFormDialog
+        open={subOpen}
+        onOpenChange={setSubOpen}
+        title="Add subcategory"
+        size="sm"
+        footer={
+          <>
             <Button variant="outline" onClick={() => setSubOpen(false)}>
               Cancel
             </Button>
@@ -393,9 +380,19 @@ function CategoryCard({ category }: CategoryCardProps) {
             >
               Add
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Name</Label>
+            <Input
+              value={subName}
+              onChange={(e) => setSubName(e.target.value)}
+            />
+          </div>
+        </div>
+      </AdminFormDialog>
 
       {confirmCopy ? (
         <ConfirmDialog
@@ -428,7 +425,7 @@ function EditCategoryDialog({
 }) {
   const form = useForm<UpdateCategoryInput>({
     resolver: zodResolver(updateCategorySchema),
-    defaultValues: {
+    values: {
       name: category.name,
       type: category.type,
       description: category.description ?? '',
@@ -436,63 +433,71 @@ function EditCategoryDialog({
     },
   });
 
+  const editCategoryFormId = `edit-category-form-${category.id}`;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit category</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Name</Label>
-            <Input {...form.register('name')} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Type</Label>
-            <Select
-              value={form.watch('type') ?? category.type}
-              onValueChange={(value) =>
-                form.setValue('type', value as CreateCategoryInput['type'])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Description</Label>
-            <Input {...form.register('description')} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Display order</Label>
-            <NumberInput
-              min={0}
-              {...form.register('displayOrder', numberRegisterOptions())}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <AdminFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Edit category"
+      size="sm"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={editCategoryFormId} disabled={loading}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <form
+        id={editCategoryFormId}
+        onSubmit={form.handleSubmit(onSave)}
+        className="space-y-4"
+      >
+        <div className="space-y-1.5">
+          <Label>Name</Label>
+          <Input {...form.register('name')} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Type</Label>
+          <Select
+            value={form.watch('type') ?? category.type}
+            onValueChange={(value) =>
+              form.setValue('type', value as CreateCategoryInput['type'])
+            }
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryTypes.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Description</Label>
+          <Input {...form.register('description')} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Display order</Label>
+          <NumberInput
+            min={0}
+            {...form.register('displayOrder', numberRegisterOptions())}
+          />
+        </div>
+      </form>
+    </AdminFormDialog>
   );
 }
 
@@ -522,43 +527,51 @@ function EditSubcategoryDialog({
 
   if (!subcategory) return null;
 
+  const editSubcategoryFormId = `edit-subcategory-form-${subcategory.id}`;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit subcategory</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Name</Label>
-            <Input {...form.register('name')} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Description</Label>
-            <Input {...form.register('description')} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Display order</Label>
-            <NumberInput
-              min={0}
-              {...form.register('displayOrder', numberRegisterOptions())}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <AdminFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Edit subcategory"
+      size="sm"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={editSubcategoryFormId} disabled={loading}>
+            Save
+          </Button>
+        </>
+      }
+    >
+      <form
+        id={editSubcategoryFormId}
+        onSubmit={form.handleSubmit(onSave)}
+        className="space-y-4"
+      >
+        <div className="space-y-1.5">
+          <Label>Name</Label>
+          <Input {...form.register('name')} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Description</Label>
+          <Input {...form.register('description')} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Display order</Label>
+          <NumberInput
+            min={0}
+            {...form.register('displayOrder', numberRegisterOptions())}
+          />
+        </div>
+      </form>
+    </AdminFormDialog>
   );
 }
 
@@ -590,13 +603,13 @@ export function AdminCategoriesPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <PageHeader
-          title="Categories"
-          description="Manage marketplace categories and subcategories. Deactivated items are hidden from the public catalog."
-        />
-        <Button onClick={() => setCreateOpen(true)}>New category</Button>
-      </div>
+      <PageHeader
+        title="Categories"
+        description="Manage marketplace categories and subcategories. Deactivated items are hidden from the public catalog."
+        actions={
+          <Button onClick={() => setCreateOpen(true)}>New category</Button>
+        }
+      />
 
       <Tabs value={view} onValueChange={(v) => setView(v as ViewFilter)}>
         <TabsList>
@@ -607,11 +620,13 @@ export function AdminCategoriesPanel() {
       </Tabs>
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error
-            ? error.message
-            : 'Failed to load categories.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : 'Failed to load categories.'
+          }
+        />
       ) : null}
 
       {isLoading ? (
@@ -621,7 +636,7 @@ export function AdminCategoriesPanel() {
           ))}
         </div>
       ) : data?.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
           No categories in this view.
         </p>
       ) : (
@@ -632,56 +647,62 @@ export function AdminCategoriesPanel() {
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create category</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="cat-name">Name</Label>
-              <Input id="cat-name" {...form.register('name')} />
-              {form.formState.errors.name ? (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.name.message}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Type</Label>
-              <Select
-                value={form.watch('type')}
-                onValueChange={(value) =>
-                  form.setValue('type', value as CreateCategoryInput['type'])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createCategory.isPending}>
-                Create
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AdminFormDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title="Create category"
+        size="sm"
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="create-category-form"
+              disabled={createCategory.isPending}
+            >
+              Create
+            </Button>
+          </>
+        }
+      >
+        <form id="create-category-form" onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-name">Name</Label>
+            <Input id="cat-name" {...form.register('name')} />
+            {form.formState.errors.name ? (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.name.message}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Type</Label>
+            <Select
+              value={form.watch('type')}
+              onValueChange={(value) =>
+                form.setValue('type', value as CreateCategoryInput['type'])
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+      </AdminFormDialog>
     </div>
   );
 }

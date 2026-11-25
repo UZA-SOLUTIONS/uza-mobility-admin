@@ -3,14 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AdminFormDialog } from '@/components/admin/shared/admin-form-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   NumberInput,
@@ -190,13 +184,30 @@ export function PartFormDialog({
     }
   });
 
+  const partFormId = 'part-form';
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit part' : 'New part'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+    <AdminFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit part' : 'New part'}
+      size="md"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" form={partFormId} disabled={busy}>
+            {isEdit ? 'Save changes' : 'Create part'}
+          </Button>
+        </>
+      }
+    >
+      <form id={partFormId} onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="part-name">Name</Label>
             <Input id="part-name" {...form.register('name')} />
@@ -315,20 +326,7 @@ export function PartFormDialog({
                 : undefined
             }
           />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={busy}>
-              {isEdit ? 'Save changes' : 'Create part'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </AdminFormDialog>
   );
 }

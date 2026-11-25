@@ -1,9 +1,9 @@
 import { adminRoutes } from '@/config/routes';
-import { ElementType } from 'react';
+import type { ElementType } from 'react';
 import {
   Home,
   List,
-  Users,
+  Store,
   Tag,
   Wrench,
   ShoppingCart,
@@ -15,13 +15,16 @@ import {
   MapPin,
   Megaphone,
   Leaf,
-  User,
+  Shield,
   Activity,
-  Percent,
-  Bell,
+  Calculator,
+  BadgePercent,
   Settings,
   Car,
   MessageCircle,
+  LayoutGrid,
+  Wallet,
+  Building2,
 } from 'lucide-react';
 
 export type NavItem = {
@@ -39,12 +42,22 @@ export type NavItem = {
 
 export type NavGroup = {
   label?: string;
+  /** Group header icon (collapsible sections). */
+  icon?: ElementType;
+  /**
+   * When false, items render as top-level links (not collapsible).
+   * Defaults to true when `label` is set.
+   */
+  collapsible?: boolean;
   items: NavItem[];
 };
 
-/** Full admin sidebar; filter with `useAdminNav()`. */
+/** Full admin sidebar; filter with `useAdminNav()`. Profile/Notifications live in the header menu. */
 export const adminNavGroups: NavGroup[] = [
   {
+    label: 'Overview',
+    icon: Home,
+    collapsible: false,
     items: [
       {
         label: 'Overview',
@@ -56,6 +69,7 @@ export const adminNavGroups: NavGroup[] = [
   },
   {
     label: 'Marketplace',
+    icon: LayoutGrid,
     items: [
       {
         label: 'Listings',
@@ -72,7 +86,7 @@ export const adminNavGroups: NavGroup[] = [
       {
         label: 'Sellers',
         href: adminRoutes.sellers,
-        icon: Users,
+        icon: Store,
         permissions: ['sellers:verify', 'sellers:suspend'],
       },
       {
@@ -90,7 +104,8 @@ export const adminNavGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Commerce',
+    label: 'Sales',
+    icon: ShoppingCart,
     items: [
       {
         label: 'Orders',
@@ -116,6 +131,12 @@ export const adminNavGroups: NavGroup[] = [
         icon: MessageCircle,
         permissions: ['inquiries:read-all', 'inquiries:update-status'],
       },
+    ],
+  },
+  {
+    label: 'Billing',
+    icon: Wallet,
+    items: [
       {
         label: 'Invoices',
         href: adminRoutes.invoices,
@@ -125,7 +146,7 @@ export const adminNavGroups: NavGroup[] = [
       {
         label: 'Discount sales',
         href: adminRoutes.discountSales,
-        icon: Percent,
+        icon: BadgePercent,
         permissions: ['invoices:read'],
       },
       {
@@ -138,6 +159,7 @@ export const adminNavGroups: NavGroup[] = [
   },
   {
     label: 'Operations',
+    icon: Truck,
     items: [
       {
         label: 'Fleet',
@@ -177,12 +199,13 @@ export const adminNavGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Platform',
+    label: 'Administration',
+    icon: Building2,
     items: [
       {
         label: 'Users',
         href: adminRoutes.users,
-        icon: Users,
+        icon: Shield,
         superAdminOnly: true,
       },
       {
@@ -194,7 +217,7 @@ export const adminNavGroups: NavGroup[] = [
       {
         label: 'Pricing rules',
         href: adminRoutes.pricingRules,
-        icon: Percent,
+        icon: Calculator,
         superAdminOnly: true,
       },
       {
@@ -202,16 +225,6 @@ export const adminNavGroups: NavGroup[] = [
         href: adminRoutes.platformSettings,
         icon: Settings,
         permissions: ['platform-settings:manage'],
-      },
-      {
-        label: 'Profile',
-        href: adminRoutes.settings,
-        icon: User,
-      },
-      {
-        label: 'Notifications',
-        href: adminRoutes.notifications,
-        icon: Bell,
       },
     ],
   },

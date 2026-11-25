@@ -3,12 +3,15 @@
 import { useMemo, useState } from 'react';
 import { UserDetailSheet } from '@/components/admin/user-detail-sheet';
 import { SuperAdminGate } from '@/components/admin/super-admin-gate';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -55,20 +58,24 @@ export function AdminUsersPanel() {
           description="View accounts, assign roles, and deactivate users. Administrator access only."
         />
 
-        <div className="max-w-md space-y-1.5">
-          <Label htmlFor="users-q">Search</Label>
-          <Input
-            id="users-q"
-            placeholder="Name, email, or role…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </div>
+        <AdminFiltersBar>
+          <div className="w-full space-y-1.5 sm:max-w-md">
+            <Label htmlFor="users-q">Search</Label>
+            <Input
+              id="users-q"
+              placeholder="Name, email, or role…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+        </AdminFiltersBar>
 
         {isError ? (
-          <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : 'Failed to load users.'}
-          </p>
+          <AdminErrorState
+            message={
+              error instanceof Error ? error.message : 'Failed to load users.'
+            }
+          />
         ) : null}
 
         <div className="rounded-lg border">
@@ -83,24 +90,13 @@ export function AdminUsersPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}>
-                        <Skeleton className="h-8 w-full" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : null}
+              {isLoading ? <AdminTableSkeletonRows columns={5} /> : null}
               {!isLoading && filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    No users found.
-                  </TableCell>
-                </TableRow>
+                <AdminTableEmpty
+                  colSpan={5}
+                  title="No users found"
+                  description="Try another search term."
+                />
               ) : null}
               {filtered.map((user) => {
                 const inactive = !user.isActive || user.deletedAt;

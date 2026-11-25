@@ -12,10 +12,7 @@ export function ModulePlaceholder({
   return (
     <PageHeader
       title={title}
-      description={
-        description ??
-        'This module will be implemented in the next phase. Use the sidebar to navigate.'
-      }
+      description={description ?? 'This page is not available.'}
     />
   );
 }

@@ -112,7 +112,7 @@ export function AdminPlatformSettingsPanel() {
           <Spinner className="size-6" />
         </div>
       ) : (
-        <div className="max-w-xl space-y-6 rounded-lg border p-4">
+        <div className="relative max-w-xl space-y-6 rounded-lg border p-4 pb-20">
           <div className="space-y-1.5">
             <Label htmlFor="booking-fee">Default booking fee (Rwf)</Label>
             <NumberInput
@@ -235,13 +235,15 @@ export function AdminPlatformSettingsPanel() {
             </p>
           </div>
 
-          <Button
-            type="button"
-            disabled={!isValid || !isDirty || update.isPending}
-            onClick={onSave}
-          >
-            {update.isPending ? 'Saving…' : 'Save settings'}
-          </Button>
+          <div className="sticky bottom-0 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80">
+            <Button
+              type="button"
+              disabled={!isValid || !isDirty || update.isPending}
+              onClick={onSave}
+            >
+              {update.isPending ? 'Saving…' : 'Save settings'}
+            </Button>
+          </div>
         </div>
       )}
     </div>

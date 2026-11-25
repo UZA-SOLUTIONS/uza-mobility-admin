@@ -2,20 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
+import {
+  DetailRow,
+  DetailSection,
+} from '@/components/admin/shared/detail-fields';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/admin/format';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useActivateAdminUser,
   useDeactivateAdminUser,
@@ -66,100 +63,103 @@ export function UserDetailSheet({
   const isInactive = Boolean(user && (!user.isActive || user.deletedAt));
   const isSelf = Boolean(user && session?.user?.id === user.id);
 
+  const accountFooter =
+    user && !isInactive && !isSelf ? (
+      <Button
+        variant="destructive"
+        size="sm"
+        disabled={busy}
+        onClick={() => setDeactivateOpen(true)}
+      >
+        Deactivate account
+      </Button>
+    ) : user && isInactive ? (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={() => setActivateOpen(true)}
+      >
+        Reactivate account
+      </Button>
+    ) : undefined;
+
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className={adminDetailSheetClassName}>
-          {user ? (
-            <>
-              <SheetHeader className="border-b px-6 py-5">
-                <SheetTitle className="text-xl">
-                  {[user.firstName, user.lastName].filter(Boolean).join(' ') ||
-                    user.email}
-                </SheetTitle>
-                <SheetDescription>{user.email}</SheetDescription>
-              </SheetHeader>
+      <AdminDetailSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={
+          user
+            ? [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+              user.email
+            : 'User details'
+        }
+        description={user?.email}
+        footer={
+          accountFooter ? (
+            <div className="flex flex-wrap gap-2">{accountFooter}</div>
+          ) : undefined
+        }
+      >
+        {user ? (
+          <>
+            <StatusBadge status={isInactive ? 'CANCELLED' : 'ACTIVE'} />
 
-              <div className="space-y-6 px-6 py-6">
-                <StatusBadge status={isInactive ? 'CANCELLED' : 'ACTIVE'} />
+            <DetailSection title="Profile">
+              <DetailRow label="Phone" value={user.phone} />
+              <DetailRow
+                label="Joined"
+                value={formatDateTime(user.createdAt)}
+              />
+            </DetailSection>
 
-                <dl className="grid gap-3 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">Phone</dt>
-                    <dd>{user.phone ?? '—'}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Joined</dt>
-                    <dd>{formatDateTime(user.createdAt)}</dd>
-                  </div>
-                </dl>
-
-                <div className="space-y-3">
-                  <Label>Roles (replaces current assignment)</Label>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {assignableRoleNames.map((role) => (
-                      <label
-                        key={role}
-                        className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
-                      >
-                        <Checkbox
-                          checked={selectedRoles.includes(role)}
-                          disabled={isInactive || busy}
-                          onCheckedChange={() => toggleRole(role)}
-                        />
-                        {role.replaceAll('_', ' ')}
-                      </label>
-                    ))}
-                  </div>
-                  <Button
-                    type="button"
-                    disabled={
-                      isInactive ||
-                      busy ||
-                      selectedRoles.length === 0 ||
-                      !rolesChanged
-                    }
-                    onClick={() =>
-                      updateRoles.mutate({
-                        id: user.id,
-                        body: {
-                          roles: selectedRoles as AssignUserRolesInput['roles'],
-                        },
-                      })
-                    }
+            <div className="space-y-3">
+              <Label>Roles (replaces current assignment)</Label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {assignableRoleNames.map((role) => (
+                  <label
+                    key={role}
+                    className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
                   >
-                    {updateRoles.isPending ? 'Saving…' : 'Save roles'}
-                  </Button>
-                </div>
-
-                {!isInactive ? (
-                  isSelf ? (
-                    <p className="text-sm text-muted-foreground">
-                      You cannot deactivate your own account.
-                    </p>
-                  ) : (
-                    <Button
-                      variant="destructive"
-                      disabled={busy}
-                      onClick={() => setDeactivateOpen(true)}
-                    >
-                      Deactivate account
-                    </Button>
-                  )
-                ) : (
-                  <Button
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => setActivateOpen(true)}
-                  >
-                    Reactivate account
-                  </Button>
-                )}
+                    <Checkbox
+                      checked={selectedRoles.includes(role)}
+                      disabled={isInactive || busy}
+                      onCheckedChange={() => toggleRole(role)}
+                    />
+                    {role.replaceAll('_', ' ')}
+                  </label>
+                ))}
               </div>
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+              <Button
+                type="button"
+                disabled={
+                  isInactive ||
+                  busy ||
+                  selectedRoles.length === 0 ||
+                  !rolesChanged
+                }
+                onClick={() =>
+                  updateRoles.mutate({
+                    id: user.id,
+                    body: {
+                      roles: selectedRoles as AssignUserRolesInput['roles'],
+                    },
+                  })
+                }
+              >
+                {updateRoles.isPending ? 'Saving…' : 'Save roles'}
+              </Button>
+            </div>
+
+            {!isInactive && isSelf ? (
+              <p className="text-sm text-muted-foreground">
+                You cannot deactivate your own account.
+              </p>
+            ) : null}
+          </>
+        ) : null}
+      </AdminDetailSheet>
 
       <ConfirmDialog
         open={deactivateOpen}

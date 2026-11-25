@@ -22,14 +22,8 @@ import {
   selectableListingPricingRules,
 } from '@/lib/admin/listing-pricing';
 import { calculateAdminPricing } from '@/lib/api/platform';
+import { AdminFormDialog } from '@/components/admin/shared/admin-form-dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
   NumberInput,
@@ -76,6 +70,23 @@ import type { AdminListing } from '@/types/admin/marketplace';
 
 function countWords(value: string): number {
   return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function FormSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-4 rounded-lg border bg-muted/20 p-4">
+      <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
 }
 
 type ListingFormDialogProps = {
@@ -126,6 +137,8 @@ export function ListingFormDialog({
     () => existingPhotos.find((photo) => photo.isPrimary)?.id ?? null,
     [existingPhotos],
   );
+  const effectiveOriginalPrimaryPhotoId =
+    originalPrimaryPhotoId ?? originalPhotoIds[0] ?? null;
   const photoOrderChanged =
     keptExistingPhotos.length !== originalPhotoIds.length ||
     keptExistingPhotos.some(
@@ -136,7 +149,8 @@ export function ListingFormDialog({
     keptExistingPhotos[0]?.id ??
     null;
   const primaryChanged =
-    primaryPhotoId != null && primaryPhotoId !== originalPrimaryPhotoId;
+    primaryPhotoId != null &&
+    primaryPhotoId !== effectiveOriginalPrimaryPhotoId;
   const mediaDirty =
     removedPhotoIds.length > 0 ||
     photos.length > 0 ||
@@ -369,20 +383,44 @@ export function ListingFormDialog({
     );
   });
 
+  const listingFormId = 'listing-form';
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl lg:max-w-5xl">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? 'Edit platform listing' : 'New platform listing'}
-          </DialogTitle>
-        </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          {isEdit
-            ? 'Update your UZA stock or sourcing listing. Reorder existing photos, set a cover, remove, or add more.'
-            : 'Each inventory channel uses its own seller profile on your account (e.g. Rwanda stock vs China sourcing).'}
-        </p>
-        <form onSubmit={onSubmit} className="space-y-4">
+    <AdminFormDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit platform listing' : 'New platform listing'}
+      description={
+        isEdit
+          ? 'Update your UZA stock or sourcing listing. Reorder existing photos, set a cover, remove, or add more.'
+          : 'Each inventory channel uses its own seller profile on your account (e.g. Rwanda stock vs China sourcing).'
+      }
+      size="xl"
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form={listingFormId}
+            disabled={busy || (isEdit && !isDirty && !mediaDirty)}
+          >
+            {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create listing'}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id={listingFormId}
+        onSubmit={onSubmit}
+        className="space-y-4"
+      >
+          <FormSection title="Channel">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Inventory channel</Label>
@@ -464,7 +502,9 @@ export function ListingFormDialog({
               </div>
             ) : null}
           </div>
+          </FormSection>
 
+          <FormSection title="Vehicle">
           <div className="space-y-1.5">
             <Label htmlFor="listing-title">Title</Label>
             <Input id="listing-title" {...form.register('listingTitle')} />
@@ -944,7 +984,10 @@ export function ListingFormDialog({
             </div>
           </div>
 
-          <div className="space-y-3 rounded-lg border p-4">
+          </FormSection>
+
+          <FormSection title="Pricing">
+          <div className="space-y-3 rounded-lg border bg-background p-4">
             <p className="text-sm font-medium">Pricing rule</p>
             <div className="space-y-1.5">
               <Label>Rule to apply</Label>
@@ -1018,6 +1061,9 @@ export function ListingFormDialog({
             </p>
           ) : null}
 
+          </FormSection>
+
+          <FormSection title="Media">
           <div className="space-y-1.5">
             <Label htmlFor="listing-desc">Description</Label>
             <Textarea
@@ -1198,24 +1244,8 @@ export function ListingFormDialog({
               </p>
             ) : null}
           </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={busy || (isEdit && !isDirty && !mediaDirty)}
-            >
-              {busy ? 'Saving…' : isEdit ? 'Save changes' : 'Create listing'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </FormSection>
+      </form>
+    </AdminFormDialog>
   );
 }

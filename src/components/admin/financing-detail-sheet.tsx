@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
+import {
+  DetailRow,
+  DetailSection,
+} from '@/components/admin/shared/detail-fields';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,16 +27,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDate, formatInvoiceTotal, formatUsd } from '@/lib/admin/format';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import {
   useAdminBanks,
   useAdminFinancingRequest,
@@ -92,129 +89,127 @@ export function FinancingDetailSheet({
     can('financing:send-to-bank');
   const canRecordOutcome =
     request?.status === 'SENT_TO_BANK' && can('financing:send-to-bank');
+  const showFooter =
+    request && !isLoading && (canAssign || canRecordOutcome);
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className={adminDetailSheetClassName}>
-          {isLoading ? (
-            <div className="space-y-4 px-6 py-6">
-              <Skeleton className="h-8 w-2/3" />
-              <Skeleton className="h-24 w-full" />
+      <AdminDetailSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={request?.buyerName ?? 'Financing request'}
+        description={
+          request
+            ? `${request.user.email} · ${request.phone}`
+            : undefined
+        }
+        footer={
+          showFooter ? (
+            <div className="flex flex-wrap gap-2">
+              {canAssign ? (
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => setAssignOpen(true)}
+                >
+                  Assign bank
+                </Button>
+              ) : null}
+              {canRecordOutcome ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setOutcomeOpen(true)}
+                >
+                  Record outcome
+                </Button>
+              ) : null}
             </div>
-          ) : null}
+          ) : undefined
+        }
+      >
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : null}
 
-          {isError ? (
-            <p className="px-6 py-6 text-sm text-destructive">
-              {error instanceof Error
-                ? error.message
-                : 'Failed to load request.'}
-            </p>
-          ) : null}
+        {isError ? (
+          <p className="text-sm text-destructive">
+            {error instanceof Error
+              ? error.message
+              : 'Failed to load request.'}
+          </p>
+        ) : null}
 
-          {request && !isLoading ? (
-            <>
-              <SheetHeader className="border-b px-6 py-5">
-                <SheetTitle className="text-xl">{request.buyerName}</SheetTitle>
-                <SheetDescription>
-                  {request.user.email} · {request.phone}
-                </SheetDescription>
-              </SheetHeader>
+        {request && !isLoading ? (
+          <>
+            <StatusBadge status={request.status} />
 
-              <div className="space-y-6 px-6 py-6">
-                <StatusBadge status={request.status} />
+            <DetailSection title="Request">
+              <DetailRow
+                label="Organization"
+                value={request.organizationName}
+              />
+              <DetailRow
+                label="Preferred deposit"
+                value={formatUsd(request.preferredDepositUsd)}
+              />
+              <DetailRow
+                label="Preferred bank"
+                value={request.preferredBankName}
+              />
+              <DetailRow
+                label="Assigned bank"
+                value={request.assignedBank?.name}
+              />
+              <DetailRow
+                label="Linked invoice"
+                value={request.invoice?.invoiceNumber}
+              />
+              {request.invoice ? (
+                <DetailRow
+                  label="Invoice status"
+                  value={<StatusBadge status={request.invoice.status} />}
+                />
+              ) : null}
+              <DetailRow
+                label="Invoice amount"
+                value={
+                  request.invoice
+                    ? formatInvoiceTotal(request.invoice)
+                    : undefined
+                }
+              />
+              <DetailRow
+                label="Submitted"
+                value={formatDate(request.createdAt)}
+              />
+              <DetailRow label="Updated" value={formatDate(request.updatedAt)} />
+            </DetailSection>
 
-                <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Organization</dt>
-                    <dd>{request.organizationName ?? '—'}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Preferred deposit</dt>
-                    <dd>{formatUsd(request.preferredDepositUsd)}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Preferred bank</dt>
-                    <dd>{request.preferredBankName ?? '—'}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Assigned bank</dt>
-                    <dd>{request.assignedBank?.name ?? '—'}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Linked invoice</dt>
-                    <dd>{request.invoice?.invoiceNumber ?? '—'}</dd>
-                  </div>
-                  {request.invoice ? (
-                    <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                      <dt className="text-muted-foreground">Invoice status</dt>
-                      <dd>
-                        <StatusBadge status={request.invoice.status} />
-                      </dd>
-                    </div>
-                  ) : null}
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Invoice amount</dt>
-                    <dd>
-                      {request.invoice
-                        ? formatInvoiceTotal(request.invoice)
-                        : '—'}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Submitted</dt>
-                    <dd>{formatDate(request.createdAt)}</dd>
-                  </div>
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Updated</dt>
-                    <dd>{formatDate(request.updatedAt)}</dd>
-                  </div>
-                </dl>
-
-                {request.notes ? (
-                  <div className="space-y-1 text-sm">
-                    <p className="font-medium">Buyer notes</p>
-                    <p className="whitespace-pre-wrap text-muted-foreground">
-                      {request.notes}
-                    </p>
-                  </div>
-                ) : null}
-
-                {request.reviewNotes ? (
-                  <div className="rounded-md border bg-muted/30 p-4 text-sm">
-                    <p className="font-medium">Internal review notes</p>
-                    <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
-                      {request.reviewNotes}
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/30 p-4">
-                  {canAssign ? (
-                    <Button
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => setAssignOpen(true)}
-                    >
-                      Assign bank
-                    </Button>
-                  ) : null}
-                  {canRecordOutcome ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => setOutcomeOpen(true)}
-                    >
-                      Record outcome
-                    </Button>
-                  ) : null}
-                </div>
+            {request.notes ? (
+              <div className="space-y-1 text-sm">
+                <p className="font-medium">Buyer notes</p>
+                <p className="whitespace-pre-wrap text-muted-foreground">
+                  {request.notes}
+                </p>
               </div>
-            </>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+            ) : null}
+
+            {request.reviewNotes ? (
+              <div className="rounded-md border bg-muted/30 p-4 text-sm">
+                <p className="font-medium">Internal review notes</p>
+                <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
+                  {request.reviewNotes}
+                </p>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </AdminDetailSheet>
 
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
         <DialogContent>

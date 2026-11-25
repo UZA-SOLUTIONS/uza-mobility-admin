@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { PaymentDetailSheet } from '@/components/admin/payment-detail-sheet';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -54,7 +57,7 @@ export function AdminPaymentsPanel() {
         description="Review submitted payment proofs and confirm or reject them."
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <AdminFiltersBar>
         <div className="space-y-1.5">
           <Label>Status</Label>
           <Select
@@ -83,12 +86,14 @@ export function AdminPaymentsPanel() {
             </SelectContent>
           </Select>
         </div>
-      </div>
+      </AdminFiltersBar>
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : 'Failed to load payments.'}
-        </p>
+        <AdminErrorState
+          message={
+            error instanceof Error ? error.message : 'Failed to load payments.'
+          }
+        />
       ) : null}
 
       <div className="rounded-lg border">
@@ -106,26 +111,13 @@ export function AdminPaymentsPanel() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 8 }).map((__, cell) => (
-                      <TableCell key={cell}>
-                        <Skeleton className="h-5 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : null}
+            {isLoading ? <AdminTableSkeletonRows columns={8} /> : null}
             {!isLoading && data?.items.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="py-10 text-center text-muted-foreground"
-                >
-                  No payments match these filters.
-                </TableCell>
-              </TableRow>
+              <AdminTableEmpty
+                colSpan={8}
+                title="No payments match these filters"
+                description="Try another status filter."
+              />
             ) : null}
             {!isLoading
               ? data?.items.map((payment) => (

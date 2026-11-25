@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
 import { Button } from '@/components/ui/button';
@@ -18,16 +19,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/permissions';
 import { formatDate, formatDateTime, formatInvoiceTotal } from '@/lib/admin/format';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
 import { formatSellerChannel } from '@/lib/auth/seller-profiles';
 import {
   useAdminOrder,
@@ -100,40 +93,104 @@ export function OrderDetailSheet({
   const pipeline = order ? getOrderPipeline(order.sellerType) : [];
   const currentStageIndex = order ? pipeline.indexOf(order.status) : -1;
 
+  const orderActions =
+    order && !isLoading ? (
+      <>
+        {canFulfill ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => {
+              setVin(order.vin ?? '');
+              setContainerNumber(order.shipment?.containerNumber ?? '');
+              setDocumentNumber(order.shipment?.documentNumber ?? '');
+              setVesselName(order.shipment?.vesselName ?? '');
+              setVoyageNumber(order.shipment?.voyageNumber ?? '');
+              setEtaAt(
+                order.shipment?.etaAt ? order.shipment.etaAt.slice(0, 10) : '',
+              );
+              setPortOfDischarge(order.shipment?.portOfDischarge ?? '');
+              setTerminalOfPickup(order.shipment?.terminalOfPickup ?? '');
+              setArrivalNotice(null);
+              setFulfillOpen(true);
+            }}
+          >
+            Assign VIN / shipment
+          </Button>
+        ) : null}
+        {canFulfill && order.shipment ? (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => notifyPort.mutate(order.id)}
+          >
+            Notify port arrival
+          </Button>
+        ) : null}
+        {canAdvance ? (
+          <Button
+            size="sm"
+            disabled={busy || !nextStatus}
+            onClick={() => setAdvanceOpen(true)}
+          >
+            {nextStatus
+              ? `Advance to ${formatOrderStage(nextStatus)}`
+              : 'Advance status'}
+          </Button>
+        ) : null}
+        {isSuperAdmin && order.status !== 'CANCELLED' ? (
+          <Button
+            size="sm"
+            variant="destructive"
+            disabled={busy}
+            onClick={() => setCancelOpen(true)}
+          >
+            Cancel order
+          </Button>
+        ) : null}
+      </>
+    ) : null;
+
+  const showOrderFooter =
+    order &&
+    !isLoading &&
+    (canFulfill || canAdvance || (isSuperAdmin && order.status !== 'CANCELLED'));
+
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className={adminDetailSheetClassName}>
-          <SheetHeader
-            className={order && !isLoading ? 'border-b px-6 py-5' : 'sr-only'}
-          >
-            <SheetTitle className="text-xl">
-              {order?.orderNumber ?? 'Order details'}
-            </SheetTitle>
-            {order && !isLoading ? (
-              <SheetDescription>
-                {order.listing.listingTitle} ·{' '}
-                {formatSellerChannel(order.sellerType)}
-              </SheetDescription>
-            ) : null}
-          </SheetHeader>
+      <AdminDetailSheet
+        open={open}
+        onOpenChange={onOpenChange}
+        title={order?.orderNumber ?? 'Order details'}
+        description={
+          order && !isLoading
+            ? `${order.listing.listingTitle} · ${formatSellerChannel(order.sellerType)}`
+            : undefined
+        }
+        footer={
+          showOrderFooter ? (
+            <div className="flex flex-wrap gap-2">{orderActions}</div>
+          ) : undefined
+        }
+      >
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ) : null}
 
-          {isLoading ? (
-            <div className="space-y-4 px-6 py-6">
-              <Skeleton className="h-8 w-2/3" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-          ) : null}
+        {isError ? (
+          <p className="text-sm text-destructive">
+            {error instanceof Error ? error.message : 'Failed to load order.'}
+          </p>
+        ) : null}
 
-          {isError ? (
-            <p className="px-6 py-6 text-sm text-destructive">
-              {error instanceof Error ? error.message : 'Failed to load order.'}
-            </p>
-          ) : null}
-
-          {order && !isLoading ? (
-            <>
-              <div className="space-y-6 px-6 py-6">
+        {order && !isLoading ? (
+          <>
+            <div className="space-y-6">
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={order.status} />
@@ -152,7 +209,7 @@ export function OrderDetailSheet({
                   </div>
 
                   {pipeline.length > 0 && order.status !== 'CANCELLED' ? (
-                    <ol className="flex flex-wrap gap-1.5">
+                    <ol className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                       {pipeline.map((stage, index) => {
                         const isCurrent = stage === order.status;
                         const isDone =
@@ -160,15 +217,36 @@ export function OrderDetailSheet({
                         return (
                           <li
                             key={stage}
-                            className={
-                              isCurrent
-                                ? 'rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground'
-                                : isDone
-                                  ? 'rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground line-through'
-                                  : 'rounded-md border px-2 py-1 text-xs text-muted-foreground'
-                            }
+                            className="flex items-center gap-2 text-xs"
                           >
-                            {formatOrderStage(stage)}
+                            <span
+                              className={
+                                isCurrent
+                                  ? 'flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground'
+                                  : isDone
+                                    ? 'flex size-6 items-center justify-center rounded-full bg-primary/15 text-[10px] font-medium text-primary'
+                                    : 'flex size-6 items-center justify-center rounded-full border text-[10px] text-muted-foreground'
+                              }
+                            >
+                              {index + 1}
+                            </span>
+                            <span
+                              className={
+                                isCurrent
+                                  ? 'font-medium text-foreground'
+                                  : isDone
+                                    ? 'text-muted-foreground'
+                                    : 'text-muted-foreground/80'
+                              }
+                            >
+                              {formatOrderStage(stage)}
+                            </span>
+                            {index < pipeline.length - 1 ? (
+                              <span
+                                className="hidden h-px w-6 bg-border sm:block"
+                                aria-hidden
+                              />
+                            ) : null}
                           </li>
                         );
                       })}
@@ -304,76 +382,10 @@ export function OrderDetailSheet({
                     </ol>
                   )}
                 </div>
-
-                <div className="flex flex-wrap gap-2 rounded-lg border bg-muted/30 p-4">
-                  {canFulfill ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => {
-                        setVin(order.vin ?? '');
-                        setContainerNumber(
-                          order.shipment?.containerNumber ?? '',
-                        );
-                        setDocumentNumber(order.shipment?.documentNumber ?? '');
-                        setVesselName(order.shipment?.vesselName ?? '');
-                        setVoyageNumber(order.shipment?.voyageNumber ?? '');
-                        setEtaAt(
-                          order.shipment?.etaAt
-                            ? order.shipment.etaAt.slice(0, 10)
-                            : '',
-                        );
-                        setPortOfDischarge(
-                          order.shipment?.portOfDischarge ?? '',
-                        );
-                        setTerminalOfPickup(
-                          order.shipment?.terminalOfPickup ?? '',
-                        );
-                        setArrivalNotice(null);
-                        setFulfillOpen(true);
-                      }}
-                    >
-                      Assign VIN / shipment
-                    </Button>
-                  ) : null}
-                  {canFulfill && order.shipment ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => notifyPort.mutate(order.id)}
-                    >
-                      Notify port arrival
-                    </Button>
-                  ) : null}
-                  {canAdvance ? (
-                    <Button
-                      size="sm"
-                      disabled={busy || !nextStatus}
-                      onClick={() => setAdvanceOpen(true)}
-                    >
-                      {nextStatus
-                        ? `Advance to ${formatOrderStage(nextStatus)}`
-                        : 'Advance status'}
-                    </Button>
-                  ) : null}
-                  {isSuperAdmin && order.status !== 'CANCELLED' ? (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={busy}
-                      onClick={() => setCancelOpen(true)}
-                    >
-                      Cancel order
-                    </Button>
-                  ) : null}
-                </div>
               </div>
             </>
           ) : null}
-        </SheetContent>
-      </Sheet>
+      </AdminDetailSheet>
 
       <Dialog open={advanceOpen} onOpenChange={setAdvanceOpen}>
         <DialogContent>

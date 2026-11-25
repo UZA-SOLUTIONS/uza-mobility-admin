@@ -2,14 +2,21 @@
 
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminFiltersBar } from '@/components/admin/shared/admin-filters-bar';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
+import {
+  DetailRow,
+  DetailSection,
+} from '@/components/admin/shared/detail-fields';
 import { PaginationBar } from '@/components/admin/shared/pagination-bar';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -27,13 +34,6 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/admin/format';
 import { usePermissions } from '@/hooks/permissions';
 import {
@@ -130,7 +130,7 @@ export function AdminStationsPanel() {
         </TabsList>
 
         <TabsContent value="operators" className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <AdminFiltersBar>
             <div className="space-y-1.5">
               <Label>Search</Label>
               <Input
@@ -202,7 +202,17 @@ export function AdminStationsPanel() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </AdminFiltersBar>
+
+          {operators.isError ? (
+            <AdminErrorState
+              message={
+                operators.error instanceof Error
+                  ? operators.error.message
+                  : 'Failed to load operator applications.'
+              }
+            />
+          ) : null}
 
           <div className="rounded-lg border">
             <Table>
@@ -216,26 +226,8 @@ export function AdminStationsPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {operators.isLoading
-                  ? Array.from({ length: 4 }).map((_, index) => (
-                      <TableRow key={`op-skeleton-${index}`}>
-                        <TableCell colSpan={5}>
-                          <Skeleton className="h-8 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : null}
-                {operators.isError ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-destructive"
-                    >
-                      {operators.error instanceof Error
-                        ? operators.error.message
-                        : 'Failed to load operator applications.'}
-                    </TableCell>
-                  </TableRow>
+                {operators.isLoading ? (
+                  <AdminTableSkeletonRows columns={5} rows={4} />
                 ) : null}
                 {operators.data?.items.map((operator) => (
                   <TableRow key={operator.id}>
@@ -296,14 +288,11 @@ export function AdminStationsPanel() {
                 {!operators.isLoading &&
                 !operators.isError &&
                 (operators.data?.items.length ?? 0) === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No operator applications found for the selected filters.
-                    </TableCell>
-                  </TableRow>
+                  <AdminTableEmpty
+                    colSpan={5}
+                    title="No operator applications found"
+                    description="Try different search or status filters."
+                  />
                 ) : null}
               </TableBody>
             </Table>
@@ -320,7 +309,7 @@ export function AdminStationsPanel() {
         </TabsContent>
 
         <TabsContent value="stations" className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
+          <AdminFiltersBar>
             <div className="space-y-1.5">
               <Label>Search</Label>
               <Input
@@ -393,7 +382,17 @@ export function AdminStationsPanel() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </AdminFiltersBar>
+
+          {stations.isError ? (
+            <AdminErrorState
+              message={
+                stations.error instanceof Error
+                  ? stations.error.message
+                  : 'Failed to load charging stations.'
+              }
+            />
+          ) : null}
 
           <div className="rounded-lg border">
             <Table>
@@ -407,26 +406,8 @@ export function AdminStationsPanel() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stations.isLoading
-                  ? Array.from({ length: 4 }).map((_, index) => (
-                      <TableRow key={`station-skeleton-${index}`}>
-                        <TableCell colSpan={5}>
-                          <Skeleton className="h-8 w-full" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  : null}
-                {stations.isError ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-destructive"
-                    >
-                      {stations.error instanceof Error
-                        ? stations.error.message
-                        : 'Failed to load charging stations.'}
-                    </TableCell>
-                  </TableRow>
+                {stations.isLoading ? (
+                  <AdminTableSkeletonRows columns={5} rows={4} />
                 ) : null}
                 {stations.data?.items.map((station) => (
                   <TableRow key={station.id}>
@@ -501,14 +482,11 @@ export function AdminStationsPanel() {
                 {!stations.isLoading &&
                 !stations.isError &&
                 (stations.data?.items.length ?? 0) === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No charging stations found for the selected filters.
-                    </TableCell>
-                  </TableRow>
+                  <AdminTableEmpty
+                    colSpan={5}
+                    title="No charging stations found"
+                    description="Try different search or status filters."
+                  />
                 ) : null}
               </TableBody>
             </Table>
@@ -525,106 +503,68 @@ export function AdminStationsPanel() {
         </TabsContent>
       </Tabs>
 
-      <Sheet
+      <AdminDetailSheet
         open={Boolean(selectedOperator)}
         onOpenChange={(open) => !open && setSelectedOperator(null)}
+        title={selectedOperator?.businessName ?? 'Operator'}
+        description="Operator application details"
       >
-        <SheetContent className={adminDetailSheetClassName}>
-          <SheetHeader>
-            <SheetTitle>{selectedOperator?.businessName}</SheetTitle>
-            <SheetDescription>Operator application details</SheetDescription>
-          </SheetHeader>
-          {selectedOperator ? (
-            <dl className="grid gap-3 px-4 pb-6 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Status</dt>
-                <dd>
-                  <StatusBadge status={selectedOperator.status} />
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Contact</dt>
-                <dd>{selectedOperator.contactPerson}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Email</dt>
-                <dd>{selectedOperator.email}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Phone</dt>
-                <dd>{selectedOperator.phone}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Location</dt>
-                <dd>
-                  {selectedOperator.city}, {selectedOperator.country}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Address</dt>
-                <dd>{selectedOperator.address ?? '—'}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Description</dt>
-                <dd>{selectedOperator.description ?? '—'}</dd>
-              </div>
-            </dl>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+        {selectedOperator ? (
+          <DetailSection title="Application">
+            <DetailRow
+              label="Status"
+              value={<StatusBadge status={selectedOperator.status} />}
+            />
+            <DetailRow label="Contact" value={selectedOperator.contactPerson} />
+            <DetailRow label="Email" value={selectedOperator.email} />
+            <DetailRow label="Phone" value={selectedOperator.phone} />
+            <DetailRow
+              label="Location"
+              value={`${selectedOperator.city}, ${selectedOperator.country}`}
+            />
+            <DetailRow label="Address" value={selectedOperator.address} />
+            <DetailRow label="Description" value={selectedOperator.description} />
+          </DetailSection>
+        ) : null}
+      </AdminDetailSheet>
 
-      <Sheet
+      <AdminDetailSheet
         open={Boolean(selectedStation)}
         onOpenChange={(open) => !open && setSelectedStation(null)}
+        title={selectedStation?.name ?? 'Station'}
+        description="Station moderation details"
       >
-        <SheetContent className={adminDetailSheetClassName}>
-          <SheetHeader>
-            <SheetTitle>{selectedStation?.name}</SheetTitle>
-            <SheetDescription>Station moderation details</SheetDescription>
-          </SheetHeader>
-          {selectedStation ? (
-            <div className="space-y-4 px-4 pb-6 text-sm">
-              <div className="flex items-center gap-2">
-                <StatusBadge status={selectedStation.status} />
-                <span className="text-muted-foreground">
-                  Updated {formatDateTime(selectedStation.updatedAt)}
-                </span>
-              </div>
-              <p>{selectedStation.description ?? 'No description provided.'}</p>
-              <dl className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Address</dt>
-                  <dd>{selectedStation.address}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Location</dt>
-                  <dd>
-                    {selectedStation.city}, {selectedStation.country}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Ports</dt>
-                  <dd>{selectedStation.ports.length}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Pricing entries</dt>
-                  <dd>{selectedStation.pricing.length}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">
-                    Compatibility entries
-                  </dt>
-                  <dd>{selectedStation.compatibleVehicles.length}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Photos</dt>
-                  <dd>{selectedStation.photos.length}</dd>
-                </div>
-              </dl>
+        {selectedStation ? (
+          <>
+            <div className="flex items-center gap-2">
+              <StatusBadge status={selectedStation.status} />
+              <span className="text-sm text-muted-foreground">
+                Updated {formatDateTime(selectedStation.updatedAt)}
+              </span>
             </div>
-          ) : null}
-        </SheetContent>
-      </Sheet>
+            <p className="text-sm">
+              {selectedStation.description ?? 'No description provided.'}
+            </p>
+            <DetailSection title="Station">
+              <DetailRow label="Address" value={selectedStation.address} />
+              <DetailRow
+                label="Location"
+                value={`${selectedStation.city}, ${selectedStation.country}`}
+              />
+              <DetailRow label="Ports" value={selectedStation.ports.length} />
+              <DetailRow
+                label="Pricing entries"
+                value={selectedStation.pricing.length}
+              />
+              <DetailRow
+                label="Compatibility entries"
+                value={selectedStation.compatibleVehicles.length}
+              />
+              <DetailRow label="Photos" value={selectedStation.photos.length} />
+            </DetailSection>
+          </>
+        ) : null}
+      </AdminDetailSheet>
 
       <ConfirmDialog
         open={confirmOpen}

@@ -2,18 +2,16 @@
 
 import Image from 'next/image';
 import { PartActions } from '@/components/admin/part-actions';
+import { AdminDetailSheet } from '@/components/admin/shared/admin-detail-sheet';
+import {
+  DetailRow,
+  DetailSection,
+} from '@/components/admin/shared/detail-fields';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { partDisplayStatus } from '@/lib/admin/part-status';
-import { adminDetailSheetClassName } from '@/lib/admin/detail-sheet';
-import { formatDate, formatDateTime, formatUsd } from '@/lib/admin/format';
+import { formatDateTime, formatUsd } from '@/lib/admin/format';
+import { marketplaceSparePartsUrl } from '@/lib/marketplace-url';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { useAdminCategories, useAdminPart } from '@/queries/admin';
 import type { AdminPart, Category } from '@/types/admin/marketplace';
 
@@ -50,165 +48,158 @@ export function PartDetailSheet({
 
   const photos = part?.photos ?? [];
 
+  const description = part
+    ? [
+        part.slug,
+        part.seller?.businessName ? ` · ${part.seller.businessName}` : '',
+      ].join('')
+    : undefined;
+
+  const showActions = Boolean(part && !isLoading);
+  const partsMarketplaceHref = part
+    ? marketplaceSparePartsUrl(part.categorySlug)
+    : null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className={adminDetailSheetClassName}>
-        {isLoading ? (
-          <div className="space-y-4 px-6 py-6">
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="grid grid-cols-2 gap-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <Skeleton
-                  key={index}
-                  className="aspect-[4/3] w-full rounded-md"
-                />
+    <AdminDetailSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={part?.name ?? 'Part details'}
+      description={description}
+      footer={
+        showActions && part ? (
+          <PartActions
+            part={part}
+            onEdit={() => onEdit(part)}
+            onDelete={() => onDelete(part)}
+            onActionComplete={() => onOpenChange(false)}
+          />
+        ) : undefined
+      }
+    >
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-2/3" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="aspect-[4/3] w-full rounded-md" />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {isError ? (
+        <p className="text-sm text-destructive">
+          {error instanceof Error ? error.message : 'Failed to load part.'}
+        </p>
+      ) : null}
+
+      {part && !isLoading ? (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={partDisplayStatus(part)} />
+          </div>
+
+          {photos.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              {photos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className="relative aspect-[4/3] overflow-hidden rounded-md border bg-muted"
+                >
+                  <Image
+                    src={photo.url}
+                    alt={part.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 33vw, 280px"
+                    unoptimized
+                  />
+                  {photo.isPrimary ? (
+                    <span className="absolute top-2 left-2 rounded bg-background/90 px-2 py-0.5 text-xs font-medium">
+                      Primary
+                    </span>
+                  ) : null}
+                </div>
               ))}
             </div>
-          </div>
-        ) : null}
+          ) : (
+            <p className="text-sm text-muted-foreground">No photos uploaded.</p>
+          )}
 
-        {isError ? (
-          <p className="px-6 py-6 text-sm text-destructive">
-            {error instanceof Error ? error.message : 'Failed to load part.'}
-          </p>
-        ) : null}
+          <DetailSection title="Part details">
+            <DetailRow
+              label="Category"
+              value={categoryLabel(part.categorySlug, categories)}
+            />
+            {partsMarketplaceHref ? (
+              <DetailRow
+                label="Marketplace"
+                value={
+                  <a
+                    href={partsMarketplaceHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    View category on marketplace
+                  </a>
+                }
+              />
+            ) : null}
+            <DetailRow label="Condition" value={part.condition} />
+            <DetailRow label="Price" value={formatUsd(part.priceUsd)} />
+            <DetailRow
+              label="Stock"
+              value={`${part.stockQuantity} (${part.stockLabel})`}
+            />
+            {part.deliveryEstimate ? (
+              <DetailRow label="Delivery" value={part.deliveryEstimate} />
+            ) : null}
+            <DetailRow label="Active" value={part.isActive ? 'Yes' : 'No'} />
+            <DetailRow
+              label="Seller ID"
+              value={<span className="font-mono text-xs">{part.sellerId ?? '—'}</span>}
+            />
+            <DetailRow label="Created" value={formatDateTime(part.createdAt)} />
+            <DetailRow label="Updated" value={formatDateTime(part.updatedAt)} />
+            {part.hasWarranty ? (
+              <DetailRow
+                label="Warranty"
+                value={part.warrantyDetails ?? 'Yes'}
+              />
+            ) : null}
+          </DetailSection>
 
-        {part && !isLoading ? (
-          <>
-            <SheetHeader className="border-b px-6 py-5">
-              <SheetTitle className="text-xl">{part.name}</SheetTitle>
-              <SheetDescription>
-                {part.slug}
-                {part.seller?.businessName
-                  ? ` · ${part.seller.businessName}`
-                  : ''}
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="space-y-6 px-6 py-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge status={partDisplayStatus(part)} />
-              </div>
-
-              {photos.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-                  {photos.map((photo) => (
-                    <div
-                      key={photo.id}
-                      className="relative aspect-[4/3] overflow-hidden rounded-md border bg-muted"
-                    >
-                      <Image
-                        src={photo.url}
-                        alt={part.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 1024px) 33vw, 280px"
-                        unoptimized
-                      />
-                      {photo.isPrimary ? (
-                        <span className="absolute top-2 left-2 rounded bg-background/90 px-2 py-0.5 text-xs font-medium">
-                          Primary
-                        </span>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  No photos uploaded.
+          {part.compatibleBrands.length > 0 ||
+          part.compatibleModels.length > 0 ? (
+            <div className="space-y-2 text-sm">
+              {part.compatibleBrands.length > 0 ? (
+                <p>
+                  <span className="font-medium">Compatible brands: </span>
+                  {part.compatibleBrands.join(', ')}
                 </p>
-              )}
-
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Category</dt>
-                  <dd>{categoryLabel(part.categorySlug, categories)}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Condition</dt>
-                  <dd>{part.condition}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Price</dt>
-                  <dd className="font-medium">{formatUsd(part.priceUsd)}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Stock</dt>
-                  <dd>
-                    {part.stockQuantity} ({part.stockLabel})
-                  </dd>
-                </div>
-                {part.deliveryEstimate ? (
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Delivery</dt>
-                    <dd>{part.deliveryEstimate}</dd>
-                  </div>
-                ) : null}
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Active</dt>
-                  <dd>{part.isActive ? 'Yes' : 'No'}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Seller ID</dt>
-                  <dd className="font-mono text-xs">{part.sellerId ?? '—'}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Created</dt>
-                  <dd>{formatDateTime(part.createdAt)}</dd>
-                </div>
-                <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                  <dt className="text-muted-foreground">Updated</dt>
-                  <dd>{formatDateTime(part.updatedAt)}</dd>
-                </div>
-                {part.hasWarranty ? (
-                  <div className="flex justify-between gap-4 sm:flex-col sm:gap-1">
-                    <dt className="text-muted-foreground">Warranty</dt>
-                    <dd>{part.warrantyDetails ?? 'Yes'}</dd>
-                  </div>
-                ) : null}
-              </dl>
-
-              {part.compatibleBrands.length > 0 ||
-              part.compatibleModels.length > 0 ? (
-                <div className="space-y-2 text-sm">
-                  {part.compatibleBrands.length > 0 ? (
-                    <p>
-                      <span className="font-medium">Compatible brands: </span>
-                      {part.compatibleBrands.join(', ')}
-                    </p>
-                  ) : null}
-                  {part.compatibleModels.length > 0 ? (
-                    <p>
-                      <span className="font-medium">Compatible models: </span>
-                      {part.compatibleModels.join(', ')}
-                    </p>
-                  ) : null}
-                </div>
               ) : null}
-
-              {part.description ? (
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Description</p>
-                  <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                    {part.description}
-                  </p>
-                </div>
+              {part.compatibleModels.length > 0 ? (
+                <p>
+                  <span className="font-medium">Compatible models: </span>
+                  {part.compatibleModels.join(', ')}
+                </p>
               ) : null}
-
-              <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-                <p className="text-sm font-medium">Actions</p>
-                <PartActions
-                  part={part}
-                  onEdit={() => onEdit(part)}
-                  onDelete={() => onDelete(part)}
-                  onActionComplete={() => onOpenChange(false)}
-                />
-              </div>
             </div>
-          </>
-        ) : null}
-      </SheetContent>
-    </Sheet>
+          ) : null}
+
+          {part.description ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Description</p>
+              <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                {part.description}
+              </p>
+            </div>
+          ) : null}
+        </>
+      ) : null}
+    </AdminDetailSheet>
   );
 }

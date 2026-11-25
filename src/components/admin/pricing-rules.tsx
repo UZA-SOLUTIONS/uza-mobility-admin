@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { PricingRuleFormDialog } from '@/components/admin/pricing-rule-form-dialog';
 import { SuperAdminGate } from '@/components/admin/super-admin-gate';
 import { ConfirmDialog } from '@/components/admin/shared/confirm-dialog';
+import { AdminErrorState } from '@/components/admin/shared/admin-error-state';
+import { AdminTableEmpty } from '@/components/admin/shared/admin-table-empty';
+import { AdminTableSkeletonRows } from '@/components/admin/shared/admin-table-skeleton-rows';
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/admin/shared/status-badge';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -53,16 +55,17 @@ export function AdminPricingRulesPanel() {
         <PageHeader
           title="Pricing rules"
           description="Configure how listing prices are calculated per seller channel and route."
+          actions={<Button onClick={openCreate}>Add pricing rule</Button>}
         />
 
-        <Button onClick={openCreate}>Add pricing rule</Button>
-
         {isError ? (
-          <p className="text-sm text-destructive">
-            {error instanceof Error
-              ? error.message
-              : 'Failed to load pricing rules.'}
-          </p>
+          <AdminErrorState
+            message={
+              error instanceof Error
+                ? error.message
+                : 'Failed to load pricing rules.'
+            }
+          />
         ) : null}
 
         <div className="rounded-lg border">
@@ -77,24 +80,15 @@ export function AdminPricingRulesPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}>
-                        <Skeleton className="h-8 w-full" />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : null}
+              {isLoading ? (
+                <AdminTableSkeletonRows columns={5} rows={4} />
+              ) : null}
               {data?.length === 0 && !isLoading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    No pricing rules yet.
-                  </TableCell>
-                </TableRow>
+                <AdminTableEmpty
+                  colSpan={5}
+                  title="No pricing rules yet"
+                  description="Add a rule to define margins and discounts per channel."
+                />
               ) : null}
               {data?.map((rule) => (
                 <TableRow key={rule.id}>
